@@ -1,0 +1,36 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "NES/1.0.0": {
+        "dependencies": {
+          "DisplayEngine": "1.0.0"
+        },
+        "runtime": {
+          "NES.dll": {}
+        }
+      },
+      "DisplayEngine/1.0.0": {
+        "runtime": {
+          "DisplayEngine.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "NES/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "DisplayEngine/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
