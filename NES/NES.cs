@@ -26,13 +26,41 @@ namespace NES
         public Settings settings = new Settings();
         public Engine engine;
 
+        public List<string> KeysPressed = new List<string>();
+
+        public void KeyDownHandler(object sender, KeyEventArgs e)
+        {
+            //KeysPressed.Add(e.KeyCode);
+
+            switch (e.KeyCode)
+            {
+                case "SDLK_q":
+                    engine.Quit();
+                    break;
+                case "SDLK_SPACE":
+                    while (!nes.cpu.Complete())
+                    {
+                        nes.cpu.Clock();
+                    }
+                    nes.cpu.Clock();
+                    break;
+            }
+        }
+
+        public void KeyUpHandler(object sender, KeyEventArgs e)
+        {
+            KeysPressed.Remove(e.KeyCode);
+        }
+
         public NESSystem()
         {
             nes = new Bus();
 
             SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS_CAP;
-            engine = new Engine(settings.WindowSettings[WindowSettingTypes.HD_Double], "SteveNES");
-            engine.Run(renderFrame: RenderFrame);
+            engine = new Engine(settings.WindowSettings[WindowSettingTypes.CPUView], "SteveNES");
+
+            engine.KeyDown += KeyDownHandler;
+            engine.KeyUp += KeyUpHandler;
 
             string program = "A20A8E0000A2038E0100AC0000A900186D010088D0FA8D0200EAEAEA";
             byte[] progbytes = Convert.FromHexString(program);
@@ -53,7 +81,7 @@ namespace NES
             // reset
             nes.cpu.Reset();
 
-
+            engine.Run(renderFrame: RenderFrame);
         }
 
         // Called by the display engine
@@ -61,15 +89,18 @@ namespace NES
         {
             engine.ClearScreen(c_blue);
 
-            // TODO
             // Handle key input here
+            // SDLK_SPACE
+            // SDLK_c
+
+
+
+
 
             DrawRam(2, 2, 0x0000, 16, 16);
             DrawRam(2, 182, 0x8000, 16, 16);
             DrawCPU(448, 2);
             DrawCode(448, 72, 26);
-
-
         }
 
 

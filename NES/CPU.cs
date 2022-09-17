@@ -110,13 +110,13 @@ namespace NES
             {
                 new INSTRUCTION("BRK", BRK, IMP, 7), new INSTRUCTION("ORA", ORA, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ORA", ORA, ZP0, 7), new INSTRUCTION("ASL", ASL, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PHP", PHP, IMP, 3), new INSTRUCTION("ORA", ORA, IMM, 2), new INSTRUCTION("ASL", ASL, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ORA", ORA, ABS, 4), new INSTRUCTION("ASL", ASL, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
                 new INSTRUCTION("BPL", BPL, REL, 2), new INSTRUCTION("ORA", ORA, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ORA", ORA, ZPX, 7), new INSTRUCTION("ASL", ASL, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CLC", CLC, IMP, 2), new INSTRUCTION("ORA", ORA, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ORA", ORA, ABX, 4), new INSTRUCTION("ASL", ASL, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("JSR", JSR, ABS, 6), new INSTRUCTION("AND", AND, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("BIT", BIT, ZP0, 3), new INSTRUCTION("AND", AND, ZP0, 7), new INSTRUCTION("ROL", ROL, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PLP", PLP, IMP, 4), new INSTRUCTION("AND", AND, IMM, 2), new INSTRUCTION("ROL", ROL, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("BIT", BIT, ABS, 4), new INSTRUCTION("AND", AND, ABS, 4), new INSTRUCTION("ROL", ROL, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BMI", BMI, REL, 2), new INSTRUCTION("AND", AND, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("AND", AND, ZPX, 7), new INSTRUCTION("ROL", ROL, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("SEC", SEC, IMP, 2), new INSTRUCTION("AND", AND, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("AND", AND, ABX, 4), new INSTRUCTION("LSR", LSR, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("RTI", RTI, IMP, 6), new INSTRUCTION("EOR", EOR, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("EOR", EOR, ZP0, 7), new INSTRUCTION("LSR", LSR, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PHA", PHA, IMP, 3), new INSTRUCTION("EOR", EOR, IMM, 2), new INSTRUCTION("LSR", LSR, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("JMP", JMP, ABS, 3), new INSTRUCTION("EOR", EOR, ABS, 4), new INSTRUCTION("LSR", LSR, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BVC", BVC, REL, 2), new INSTRUCTION("EOR", EOR, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("EOR", EOR, ZPX, 7), new INSTRUCTION("LSR", LSR, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CLI", CLI, IMP, 2), new INSTRUCTION("EOR", EOR, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("EOR", EOR, ABX, 4), new INSTRUCTION("ROR", ROR, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("RTS", RTS, IMP, 6), new INSTRUCTION("ADC", ADC, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ADC", ADC, ZP0, 7), new INSTRUCTION("ROR", ROR, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PLA", PLA, IMP, 4), new INSTRUCTION("ADC", ADC, IMM, 2), new INSTRUCTION("ROR", ROR, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("JMP", JMP, ABS, 6), new INSTRUCTION("ADC", ADC, ABS, 4), new INSTRUCTION("ROR", ROR, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BVS", BVS, REL, 2), new INSTRUCTION("ADC", ADC, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ADC", ADC, ZPX, 7), new INSTRUCTION("ROR", ROR, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("SEI", SEI, IMP, 2), new INSTRUCTION("ADC", ADC, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ADC", ADC, ABX, 4), new INSTRUCTION("STX", STX, ABS, 4), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STA", STA, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STY", STY, ZP0, 3), new INSTRUCTION("STA", STA, ZP0, 7), new INSTRUCTION("STX", STX, ZP0, 3), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("DEY", DEY, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("TXA", TXA, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STY", STY, ABS, 4), new INSTRUCTION("STA", STA, ABS, 4), new INSTRUCTION("ROL", ROL, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
+                new INSTRUCTION("JSR", JSR, ABS, 6), new INSTRUCTION("AND", AND, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("BIT", BIT, ZP0, 3), new INSTRUCTION("AND", AND, ZP0, 7), new INSTRUCTION("ROL", ROL, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PLP", PLP, IMP, 4), new INSTRUCTION("AND", AND, IMM, 2), new INSTRUCTION("ROL", ROL, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("BIT", BIT, ABS, 4), new INSTRUCTION("AND", AND, ABS, 4), new INSTRUCTION("ROL", ROL, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
+                new INSTRUCTION("BMI", BMI, REL, 2), new INSTRUCTION("AND", AND, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("AND", AND, ZPX, 7), new INSTRUCTION("ROL", ROL, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("SEC", SEC, IMP, 2), new INSTRUCTION("AND", AND, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("AND", AND, ABX, 4), new INSTRUCTION("ROL", ROL, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
+                new INSTRUCTION("RTI", RTI, IMP, 6), new INSTRUCTION("EOR", EOR, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("EOR", EOR, ZP0, 7), new INSTRUCTION("LSR", LSR, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PHA", PHA, IMP, 3), new INSTRUCTION("EOR", EOR, IMM, 2), new INSTRUCTION("LSR", LSR, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("JMP", JMP, ABS, 3), new INSTRUCTION("EOR", EOR, ABS, 4), new INSTRUCTION("LSR", LSR, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
+                new INSTRUCTION("BVC", BVC, REL, 2), new INSTRUCTION("EOR", EOR, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("EOR", EOR, ZPX, 7), new INSTRUCTION("LSR", LSR, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CLI", CLI, IMP, 2), new INSTRUCTION("EOR", EOR, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("EOR", EOR, ABX, 4), new INSTRUCTION("LSR", LSR, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
+                new INSTRUCTION("RTS", RTS, IMP, 6), new INSTRUCTION("ADC", ADC, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ADC", ADC, ZP0, 7), new INSTRUCTION("ROR", ROR, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PLA", PLA, IMP, 4), new INSTRUCTION("ADC", ADC, IMM, 2), new INSTRUCTION("ROR", ROR, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("JMP", JMP, ABS, 6), new INSTRUCTION("ADC", ADC, ABS, 4), new INSTRUCTION("ROR", ROR, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
+                new INSTRUCTION("BVS", BVS, REL, 2), new INSTRUCTION("ADC", ADC, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ADC", ADC, ZPX, 7), new INSTRUCTION("ROR", ROR, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("SEI", SEI, IMP, 2), new INSTRUCTION("ADC", ADC, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ADC", ADC, ABX, 4), new INSTRUCTION("ROR", ROR, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
+                new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STA", STA, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STY", STY, ZP0, 3), new INSTRUCTION("STA", STA, ZP0, 7), new INSTRUCTION("STX", STX, ZP0, 3), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("DEY", DEY, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("TXA", TXA, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STY", STY, ABS, 4), new INSTRUCTION("STA", STA, ABS, 4), new INSTRUCTION("STX", STX, ABS, 4), new INSTRUCTION("???", XXX, XXX, 1),
                 new INSTRUCTION("BCC", BCC, REL, 2), new INSTRUCTION("STA", STA, IZY, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STY", STY, ZPX, 4), new INSTRUCTION("STA", STA, ZPX, 7), new INSTRUCTION("STX", STX, ZPY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("TYA", TYA, IMP, 2), new INSTRUCTION("STA", STA, ABY, 5), new INSTRUCTION("TXS", TXS, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STA", STA, ABX, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1),
                 new INSTRUCTION("LDY", LDY, IMM, 2), new INSTRUCTION("LDA", LDA, IZX, 6), new INSTRUCTION("LDX", LDX, IMM, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("LDY", LDY, ZP0, 3), new INSTRUCTION("LDA", LDA, ZP0, 7), new INSTRUCTION("LDX", LDX, ZP0, 3), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("TAY", TAY, IMP, 2), new INSTRUCTION("LDA", LDA, IMM, 2), new INSTRUCTION("TAX", TAX, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("LDY", LDY, ABS, 4), new INSTRUCTION("LDA", LDA, ABS, 4), new INSTRUCTION("LDX", LDX, ABS, 4), new INSTRUCTION("???", XXX, XXX, 1),
                 new INSTRUCTION("BCS", BCS, REL, 2), new INSTRUCTION("LDA", LDA, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("LDY", LDY, ZPX, 4), new INSTRUCTION("LDA", LDA, ZPX, 7), new INSTRUCTION("LDX", LDX, ZPY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CLV", CLV, IMP, 2), new INSTRUCTION("LDA", LDA, ABY, 4), new INSTRUCTION("TSX", TSX, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("LDY", LDY, ABX, 4), new INSTRUCTION("LDA", LDA, ABX, 4), new INSTRUCTION("LDX", LDX, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1),
@@ -130,6 +130,11 @@ namespace NES
             status = 0x34;
             stkp = 0xFD;
 
+        }
+
+        public bool Complete()
+        {
+            return cycles == 0;
         }
 
         // Whenever we want to read, we're really wanting the BUS to read - that's where the magic is going to be
@@ -1100,7 +1105,7 @@ namespace NES
 
         public Dictionary<ushort, string> Disassemble(ushort startAddr, ushort stopAddr)
         {
-            ushort addr = startAddr;
+            uint addr = startAddr;
             byte value = 0x00;
             byte lo = 0x00;
             byte hi = 0x00;
@@ -1109,11 +1114,11 @@ namespace NES
 
             while (addr <= stopAddr)
             {
-                line_addr = addr;
+                line_addr = (ushort)addr;
 
                 string outstring = "$" + Hex(addr, 4) + ": ";
 
-                byte op = bus.read(addr);
+                byte op = bus.read((ushort)addr);
                 addr++;
                 outstring += lookup[op].Name + " ";
 
@@ -1123,80 +1128,80 @@ namespace NES
                 }
                 else if (lookup[op].AddrMode == IMM)
                 {
-                    value = bus.read(addr);
+                    value = bus.read((ushort)addr);
                     addr++;
                     outstring += "#$" + Hex(value, 2) + " {IMM}";
                 }
                 else if (lookup[op].AddrMode == ZP0)
                 {
-                    lo = bus.read(addr);
+                    lo = bus.read((ushort)addr);
                     addr++;
                     hi = 0x00;
                     outstring += "$" + Hex(lo, 2) + " {ZP0}";
                 }
                 else if (lookup[op].AddrMode == ZPX)
                 {
-                    lo = bus.read(addr);
+                    lo = bus.read((ushort)addr);
                     addr++;
                     hi = 0x00;
                     outstring += "$" + Hex(lo, 2) + " X {ZPX}";
                 }
                 else if (lookup[op].AddrMode == ZPY)
                 {
-                    lo = bus.read(addr);
+                    lo = bus.read((ushort)addr);
                     addr++;
                     hi = 0x00;
                     outstring += "$" + Hex(lo, 2) + " Y {ZPY}";
                 }
                 else if (lookup[op].AddrMode == IZX)
                 {
-                    lo = bus.read(addr);
+                    lo = bus.read((ushort)addr);
                     addr++;
                     hi = 0x00;
                     outstring += "($" + Hex(lo, 2) + " X) {IZX}";
                 }
                 else if (lookup[op].AddrMode == IZY)
                 {
-                    lo = bus.read(addr);
+                    lo = bus.read((ushort)addr);
                     addr++;
                     hi = 0x00;
                     outstring += "($" + Hex(lo, 2) + " Y) {IZY}";
                 }
                 else if (lookup[op].AddrMode == ABS)
                 {
-                    lo = bus.read(addr);
+                    lo = bus.read((ushort)addr);
                     addr++;
-                    hi = bus.read(addr);
+                    hi = bus.read((ushort)addr);
                     addr++;
                     outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " {ABS}";
                 }
                 else if (lookup[op].AddrMode == ABX)
                 {
-                    lo = bus.read(addr);
+                    lo = bus.read((ushort)addr);
                     addr++;
-                    hi = bus.read(addr);
+                    hi = bus.read((ushort)addr);
                     addr++;
                     outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " X {ABX}";
                 }
                 else if (lookup[op].AddrMode == ABY)
                 {
-                    lo = bus.read(addr);
+                    lo = bus.read((ushort)addr);
                     addr++;
-                    hi = bus.read(addr);
+                    hi = bus.read((ushort)addr);
                     addr++;
                     outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " Y {ABY}";
                 }
                 else if (lookup[op].AddrMode == IND)
                 {
-                    lo = bus.read(addr);
+                    lo = bus.read((ushort)addr);
                     addr++;
-                    hi = bus.read(addr);
+                    hi = bus.read((ushort)addr);
                     addr++;
                     outstring += "($" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + ") {IND}";
                 }
                 else if (lookup[op].AddrMode == REL)
                 {
-                    value = bus.read(addr);
+                    value = bus.read((ushort)addr);
                     addr++;
                     outstring += "$" + Hex(value, 2) + " [$" + Hex((ushort)(addr + value), 4) + "] {REL}";
                 }

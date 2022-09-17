@@ -6,6 +6,7 @@ namespace DisplayEngine;
 // Primary task is to provide a window with requested width height and pixel size
 // along with override method for drawing a frame
 
+
 public class Engine
 {
     private IntPtr window = IntPtr.Zero;
@@ -14,6 +15,23 @@ public class Engine
     private WindowSize windowSize;
 
     public delegate void RenderFrameDelegate();
+
+    public event EventHandler<KeyEventArgs> KeyDown;
+    public event EventHandler<KeyEventArgs> KeyUp;
+
+
+
+    protected virtual void OnKeyDown(KeyEventArgs e)
+    {
+        EventHandler<KeyEventArgs> handler = KeyDown;
+        handler?.Invoke(this, e);
+    }
+
+    protected virtual void OnKeyUp(KeyEventArgs e)
+    {
+        EventHandler<KeyEventArgs> handler = KeyUp;
+        handler?.Invoke(this, e);
+    }
 
     private uint[] FontTiles = new uint[] {
         0x00000000, 0x00000000, 0x18181818, 0x00180018, 0x00003636, 0x00000000, 0x367F3636, 0x0036367F,
@@ -115,11 +133,15 @@ public class Engine
                         break;
                     case SDL.SDL_EventType.SDL_KEYDOWN:
                         Console.WriteLine($"{e.key.keysym.sym}");
+                        //KeyDown.Invoke(this, new KeyEventArgs() { KeyCode = e.key.keysym.sym.ToString() });
+                        OnKeyDown(new KeyEventArgs() { KeyCode = e.key.keysym.sym.ToString() });
+                        break;
+                    case SDL.SDL_EventType.SDL_KEYUP:
+                        //KeyUp.Invoke(this, new KeyEventArgs() { KeyCode = e.key.keysym.sym.ToString() });
+                        OnKeyUp(new KeyEventArgs() { KeyCode = e.key.keysym.sym.ToString() });
                         break;
                 }
             }
-
-
 
             SDL.SDL_RenderSetScale(renderer, windowSize.PixelSize, windowSize.PixelSize);
 
@@ -140,6 +162,7 @@ public class Engine
     public void Quit()
     {
         quitFlag = true;
+        SDL.SDL_Quit();
     }
 
     // milliseconds since SDL library init

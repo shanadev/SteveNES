@@ -30,7 +30,8 @@ namespace DisplayEngine
         FullHD,
         QuadHD,
         UHD,
-        FullUHD
+        FullUHD,
+        CPUView
     }
 
     public struct WindowSize
@@ -50,6 +51,11 @@ namespace DisplayEngine
         {
             get { return (float)Height / (float)Width; }
         }
+    }
+
+    public class KeyEventArgs : EventArgs
+    {
+        public string? KeyCode { get; set; }
     }
 
 }
