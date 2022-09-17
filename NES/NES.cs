@@ -19,6 +19,8 @@ namespace NES
         private ulong SCREEN_FPS_CAP = 60;
         private ulong SCREEN_TICKS_PER_FRAME;
 
+        private Dictionary<ushort, string> asm = new Dictionary<ushort, string>();
+
         private Bus nes;
 
         public Settings settings = new Settings();
@@ -26,17 +28,47 @@ namespace NES
 
         public NESSystem()
         {
+            nes = new Bus();
+
             SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS_CAP;
             engine = new Engine(settings.WindowSettings[WindowSettingTypes.HD_Double], "SteveNES");
             engine.Run(renderFrame: RenderFrame);
 
-            nes = new Bus();
+            string program = "A20A8E0000A2038E0100AC0000A900186D010088D0FA8D0200EAEAEA";
+            byte[] progbytes = Convert.FromHexString(program);
+            ushort offset = 0x8000;
+            foreach (var bt in progbytes)
+            {
+                nes.ram[offset++] = bt;
+            }
+
+            // set reset
+            nes.ram[0xFFFC] = 0x00;
+            nes.ram[0xFFFD] = 0x80;
+
+            // get dissasembly
+
+            asm = nes.cpu.Disassemble(0x0000, 0xFFFF);
+
+            // reset
+            nes.cpu.Reset();
+
 
         }
 
         // Called by the display engine
         public void RenderFrame()
         {
+            engine.ClearScreen(c_blue);
+
+            // TODO
+            // Handle key input here
+
+            DrawRam(2, 2, 0x0000, 16, 16);
+            DrawRam(2, 182, 0x8000, 16, 16);
+            DrawCPU(448, 2);
+            DrawCode(448, 72, 26);
+
 
         }
 
@@ -78,9 +110,39 @@ namespace NES
             engine.DrawText(x, y + 50, "Stack P: $" + Hex(nes.cpu.stkp, 4), c_white);
         }
 
-        public DrawCode(int x, int y, int lines)
+        public void DrawCode(int x, int y, int lines)
         {
-            
+            int lineitem = Array.IndexOf(asm.Keys.ToArray(), nes.cpu.pc);
+            int lineY = (lines >> 1) * 10 + y;
+
+            if (lineitem != asm.Count - 1)
+            {
+                engine.DrawText(x, lineY, asm.ElementAt(lineitem).Value, c_gray);
+                while (lineY < (lines * 10) + y)
+                {
+                    lineY += 10;
+                    if (++lineitem != asm.Count -1)
+                    {
+                        engine.DrawText(x, lineY, asm.ElementAt(lineitem).Value, c_white);
+                    }
+                }
+            }
+
+            lineitem = Array.IndexOf(asm.Keys.ToArray(), nes.cpu.pc);
+            lineY = (lines >> 1) * 10 + y;
+
+            if (lineitem != asm.Count - 1)
+            {
+                while (lineY > y)
+                {
+                    lineY -= 10;
+                    if (--lineitem != asm.Count - 1)
+                    {
+                        engine.DrawText(x, lineY, asm.ElementAt(lineitem).Value, c_white);
+                    }
+                }
+            }
+
         }
 
         public static string Hex(uint num, int pad)
@@ -139,11 +201,11 @@ namespace NES
             var bus = new Bus();
             var cpu = new CPU(bus);
 
-            cpu.status = 0b10101011;
-            engine.DrawText(10, 10, "Status: " + Nice8bits(cpu.status));
-            cpu.SetFlag(CPU.FLAGS6502.V, true);
-            cpu.SetFlag(CPU.FLAGS6502.N, false);
-            engine.DrawText(10, 19, "Set V:  " + Nice8bits(cpu.status));
+            //cpu.status = 0b10101011;
+            //engine.DrawText(10, 10, "Status: " + Nice8bits(cpu.status));
+            //cpu.SetFlag(CPU.FLAGS6502.V, true);
+            //cpu.SetFlag(CPU.FLAGS6502.N, false);
+            //engine.DrawText(10, 19, "Set V:  " + Nice8bits(cpu.status));
 
 
             lastTick = ticks;

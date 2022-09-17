@@ -218,7 +218,7 @@ public class Engine
         SDL.SDL_RenderDrawPoint(renderer, x, y);
     }
 
-    private void DrawCharTile(int x, int y, int tileIndex)
+    private void DrawCharTile(int x, int y, int tileIndex, ScreenColor color)
     {
 
         byte[] a = BitConverter.GetBytes(FontTiles[tileIndex]);
@@ -233,7 +233,7 @@ public class Engine
             {
                 if ((byte)(row & 1) == 1)
                 {
-                    DrawPixel(ix, iy + y, new ScreenColor(255, 255, 255, 255));
+                    DrawPixel(ix, iy + y, color);
                 }
                 row >>= 1;
                 ix += 1;
@@ -241,17 +241,19 @@ public class Engine
         }
     }
 
-    private void DrawChar(int x, int y, int charNum)
+    private void DrawChar(int x, int y, int charNum, ScreenColor color)
     {
         int tileIndex = 2 * textLookupTable[charNum];
-        DrawCharTile(x, y, tileIndex);
+        DrawCharTile(x, y, tileIndex, color);
         //DrawCharTile(x, y * 4, tileIndex + 1);
     }
 
-    public void DrawText(int x, int y, string text)
+    public void DrawText(int x, int y, string text, ScreenColor? color)
     {
         int xpos = x;
         int ypos = y;
+        ScreenColor col = color ?? new ScreenColor(255, 255, 255, 255);
+
 
         foreach (var chr in text)
         {
@@ -268,7 +270,7 @@ public class Engine
                     if (NormalCharacters.Contains(chr))
                     {
                         int charNum = (int)chr;
-                        DrawChar(xpos, ypos, charNum);
+                        DrawChar(xpos, ypos, charNum, col);
                         xpos += 8;
                     }
                     break;

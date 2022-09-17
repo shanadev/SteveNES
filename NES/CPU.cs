@@ -867,6 +867,17 @@ namespace NES
 
         public byte NOP()
         {
+            switch (opcode)
+            {
+                case 0x1C:
+                case 0x3C:
+                case 0x5C:
+                case 0x7C:
+                case 0xDC:
+                case 0XFC:
+                    return 1;
+                    break;
+            }
             return 0;
         }
 
@@ -1083,6 +1094,126 @@ namespace NES
 
 
 
+        ////////////////////////////////////////////////////////
+        /// Disassemble
+        ////////////////////////////////////////////////////////
+
+        public Dictionary<ushort, string> Disassemble(ushort startAddr, ushort stopAddr)
+        {
+            ushort addr = startAddr;
+            byte value = 0x00;
+            byte lo = 0x00;
+            byte hi = 0x00;
+            Dictionary<ushort, string> output = new Dictionary<ushort, string>();
+            ushort line_addr = 0;
+
+            while (addr <= stopAddr)
+            {
+                line_addr = addr;
+
+                string outstring = "$" + Hex(addr, 4) + ": ";
+
+                byte op = bus.read(addr);
+                addr++;
+                outstring += lookup[op].Name + " ";
+
+                if (lookup[op].AddrMode == IMP)
+                {
+                    outstring += " {IMP}";
+                }
+                else if (lookup[op].AddrMode == IMM)
+                {
+                    value = bus.read(addr);
+                    addr++;
+                    outstring += "#$" + Hex(value, 2) + " {IMM}";
+                }
+                else if (lookup[op].AddrMode == ZP0)
+                {
+                    lo = bus.read(addr);
+                    addr++;
+                    hi = 0x00;
+                    outstring += "$" + Hex(lo, 2) + " {ZP0}";
+                }
+                else if (lookup[op].AddrMode == ZPX)
+                {
+                    lo = bus.read(addr);
+                    addr++;
+                    hi = 0x00;
+                    outstring += "$" + Hex(lo, 2) + " X {ZPX}";
+                }
+                else if (lookup[op].AddrMode == ZPY)
+                {
+                    lo = bus.read(addr);
+                    addr++;
+                    hi = 0x00;
+                    outstring += "$" + Hex(lo, 2) + " Y {ZPY}";
+                }
+                else if (lookup[op].AddrMode == IZX)
+                {
+                    lo = bus.read(addr);
+                    addr++;
+                    hi = 0x00;
+                    outstring += "($" + Hex(lo, 2) + " X) {IZX}";
+                }
+                else if (lookup[op].AddrMode == IZY)
+                {
+                    lo = bus.read(addr);
+                    addr++;
+                    hi = 0x00;
+                    outstring += "($" + Hex(lo, 2) + " Y) {IZY}";
+                }
+                else if (lookup[op].AddrMode == ABS)
+                {
+                    lo = bus.read(addr);
+                    addr++;
+                    hi = bus.read(addr);
+                    addr++;
+                    outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " {ABS}";
+                }
+                else if (lookup[op].AddrMode == ABX)
+                {
+                    lo = bus.read(addr);
+                    addr++;
+                    hi = bus.read(addr);
+                    addr++;
+                    outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " X {ABX}";
+                }
+                else if (lookup[op].AddrMode == ABY)
+                {
+                    lo = bus.read(addr);
+                    addr++;
+                    hi = bus.read(addr);
+                    addr++;
+                    outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " Y {ABY}";
+                }
+                else if (lookup[op].AddrMode == IND)
+                {
+                    lo = bus.read(addr);
+                    addr++;
+                    hi = bus.read(addr);
+                    addr++;
+                    outstring += "($" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + ") {IND}";
+                }
+                else if (lookup[op].AddrMode == REL)
+                {
+                    value = bus.read(addr);
+                    addr++;
+                    outstring += "$" + Hex(value, 2) + " [$" + Hex((ushort)(addr + value), 4) + "] {REL}";
+                }
+
+                output[line_addr] = outstring;
+
+
+            }
+
+            return output;
+        }
+
+        // Utilities
+        public static string Hex(uint num, int pad) 
+        {
+            return Convert.ToString(num, toBase: 16).ToUpper().PadLeft(pad, '0');
+        }
     }
 }
 
