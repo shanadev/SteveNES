@@ -7,6 +7,7 @@ namespace NES
     {
         private Random rnd = new Random();
 
+        private ScreenColor c_white = new ScreenColor(255, 255, 255, 255);
         private ScreenColor c_black = new ScreenColor(0, 0, 0, 255);
         private ScreenColor c_red = new ScreenColor(255, 0, 0, 255);
         private ScreenColor c_green = new ScreenColor(0, 255, 0, 255);
@@ -18,6 +19,8 @@ namespace NES
         private ulong SCREEN_FPS_CAP = 60;
         private ulong SCREEN_TICKS_PER_FRAME;
 
+        private Bus nes;
+
         public Settings settings = new Settings();
         public Engine engine;
 
@@ -26,10 +29,76 @@ namespace NES
             SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS_CAP;
             engine = new Engine(settings.WindowSettings[WindowSettingTypes.HD_Double], "SteveNES");
             engine.Run(renderFrame: RenderFrame);
+
+            nes = new Bus();
+
         }
 
         // Called by the display engine
         public void RenderFrame()
+        {
+
+        }
+
+
+        public void DrawRam(int x, int y, ushort addr, int rows, int cols)
+        {
+            int cX = x;
+            int cY = y;
+
+            for (int row = 0; row < rows; row++)
+            {
+                string offset = "$" + Hex(addr, 4) + ": ";
+                for (int col = 0; col < cols; col++)
+                {
+                    offset += " " + Hex(nes.read(addr), 2);
+                    addr += 1;
+                }
+                engine.DrawText(cX, cY, offset, c_white);
+                cY += 10;
+            }
+        }
+
+        public void DrawCPU(int x, int y)
+        {
+            string status = "STATUS: ";
+            engine.DrawText(x, y, "STATUS:", c_white);
+            engine.DrawText(x + 64, y, "N", (byte)(nes.cpu.status & (byte)CPU.FLAGS6502.N) > 0 ? c_green : c_red);
+            engine.DrawText(x + 80, y, "V", (byte)(nes.cpu.status & (byte)CPU.FLAGS6502.V) > 0 ? c_green : c_red);
+            engine.DrawText(x + 96, y, "-", (byte)(nes.cpu.status & (byte)CPU.FLAGS6502.U) > 0 ? c_green : c_red);
+            engine.DrawText(x + 112, y, "B", (byte)(nes.cpu.status & (byte)CPU.FLAGS6502.B) > 0 ? c_green : c_red);
+            engine.DrawText(x + 128, y, "D", (byte)(nes.cpu.status & (byte)CPU.FLAGS6502.D) > 0 ? c_green : c_red);
+            engine.DrawText(x + 144, y, "I", (byte)(nes.cpu.status & (byte)CPU.FLAGS6502.I) > 0 ? c_green : c_red);
+            engine.DrawText(x + 160, y, "Z", (byte)(nes.cpu.status & (byte)CPU.FLAGS6502.Z) > 0 ? c_green : c_red);
+            engine.DrawText(x + 178, y, "C", (byte)(nes.cpu.status & (byte)CPU.FLAGS6502.C) > 0 ? c_green : c_red);
+            engine.DrawText(x, y + 10, "PC: $" + Hex(nes.cpu.pc, 4), c_white);
+            engine.DrawText(x, y + 20, "A: $" + Hex(nes.cpu.a, 2) + "  [" + nes.cpu.a.ToString() + "]", c_white);
+            engine.DrawText(x, y + 30, "X: $" + Hex(nes.cpu.x, 2) + "  [" + nes.cpu.x.ToString() + "]", c_white);
+            engine.DrawText(x, y + 40, "Y: $" + Hex(nes.cpu.y, 2) + "  [" + nes.cpu.y.ToString() + "]", c_white);
+            engine.DrawText(x, y + 50, "Stack P: $" + Hex(nes.cpu.stkp, 4), c_white);
+        }
+
+        public DrawCode(int x, int y, int lines)
+        {
+            
+        }
+
+        public static string Hex(uint num, int pad)
+        {
+            return Convert.ToString(num, toBase: 16).ToUpper().PadLeft(pad, '0');
+        }
+
+
+        private static string Nice8bits(byte input)
+        {
+            return "0b" + Convert.ToString(input, toBase: 2).PadLeft(8, '0');
+        }
+
+
+
+
+
+        public void TestShit()
         {
             //Console.WriteLine("Render frame");
 
@@ -84,14 +153,8 @@ namespace NES
             //{
             //    engine.Delay(SCREEN_TICKS_PER_FRAME - ticksPassed);
             //}
-
-
-
         }
 
-        private static string Nice8bits(byte input)
-        {
-            return "0b" + Convert.ToString(input, toBase: 2).PadLeft(8, '0');
-        }
+
     }
 }
