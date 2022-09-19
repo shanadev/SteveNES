@@ -18,6 +18,13 @@ namespace DisplayEngine
         }
     }
 
+    public enum Flip
+    {
+        NONE = 0,
+        HORIZ = 1,
+        VERT = 2
+    }
+
     public enum WindowSettingTypes
     {
         NES,

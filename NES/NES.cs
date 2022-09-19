@@ -5,6 +5,10 @@ namespace NES
 {
     public class NESSystem
     {
+
+
+
+
         private Random rnd = new Random();
 
         private ScreenColor c_white = new ScreenColor(255, 255, 255, 255);
@@ -23,10 +27,17 @@ namespace NES
 
         private Bus nes;
 
+        private Cartridge cartridge;
+
         public Settings settings = new Settings();
         public Engine engine;
 
         public List<string> KeysPressed = new List<string>();
+
+        public bool EmulationRun = false;
+        public float ResidualTime = 0.0f;
+
+        public byte SelectedPalette = 0x00;
 
         public void KeyDownHandler(object sender, KeyEventArgs e)
         {
@@ -37,12 +48,36 @@ namespace NES
                 case "SDLK_q":
                     engine.Quit();
                     break;
-                case "SDLK_SPACE":
+                case "SDLK_c":
                     while (!nes.cpu.Complete())
                     {
-                        nes.cpu.Clock();
+                        nes.Clock();
                     }
-                    nes.cpu.Clock();
+                    while (nes.cpu.Complete())
+                    {
+                        nes.Clock();
+                    }
+                    break;
+                case "SDLK_f":
+                    while (!nes.ppu.FrameComplete)
+                    {
+                        nes.Clock();
+                    }
+                    while (!nes.cpu.Complete())
+                    {
+                        nes.Clock();
+                    }
+                    nes.ppu.FrameComplete = false;
+                    break;
+                case "SDLK_p":
+                    ++SelectedPalette;
+                    SelectedPalette &= 0x07;
+                    break;
+                case "SDLK_SPACE":
+                    EmulationRun = !EmulationRun;
+                    break;
+                case "SDLK_r":
+                    nes.Reset();
                     break;
             }
         }
@@ -52,9 +87,13 @@ namespace NES
             KeysPressed.Remove(e.KeyCode);
         }
 
+        //public Sprite testSprite = new Sprite("controller.png");
+
         public NESSystem()
         {
-            nes = new Bus();
+
+
+            nes = new Bus(engine);
 
             SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS_CAP;
             engine = new Engine(settings.WindowSettings[WindowSettingTypes.CPUView], "SteveNES");
@@ -62,17 +101,23 @@ namespace NES
             engine.KeyDown += KeyDownHandler;
             engine.KeyUp += KeyUpHandler;
 
-            string program = "A20A8E0000A2038E0100AC0000A900186D010088D0FA8D0200EAEAEA";
-            byte[] progbytes = Convert.FromHexString(program);
-            ushort offset = 0x8000;
-            foreach (var bt in progbytes)
-            {
-                nes.ram[offset++] = bt;
-            }
+            cartridge = new Cartridge("nestest.nes");
+
+            nes.InsertCartridge(cartridge);
+
+
+
+            //string program = "A20A8E0000A2038E0100AC0000A900186D010088D0FA8D0200EAEAEA";
+            //byte[] progbytes = Convert.FromHexString(program);
+            //ushort offset = 0x8000;
+            //foreach (var bt in progbytes)
+            //{
+            //    nes.cpuRam[offset++] = bt;
+            //}
 
             // set reset
-            nes.ram[0xFFFC] = 0x00;
-            nes.ram[0xFFFD] = 0x80;
+            //nes.cpuRam[0xFFFC] = 0x00;
+            //nes.cpuRam[0xFFFD] = 0x80;
 
             // get dissasembly
 
@@ -80,6 +125,8 @@ namespace NES
 
             // reset
             nes.cpu.Reset();
+
+
 
             engine.Run(renderFrame: RenderFrame);
         }
@@ -89,18 +136,57 @@ namespace NES
         {
             engine.ClearScreen(c_blue);
 
-            // Handle key input here
-            // SDLK_SPACE
-            // SDLK_c
+            if (EmulationRun)
+            {
+                if (ResidualTime > 0.0f)
+                {
+                    ResidualTime -= engine.GetElapsedTime() / 1000;
+                }
+                else
+                {
+                    ResidualTime += (1.0f / 60.0f) - (engine.GetElapsedTime() / 1000);
+                    do { nes.Clock(); } while (!nes.ppu.FrameComplete);
+                    nes.ppu.FrameComplete = false;
+                }
+            }
+            else
+            {
 
+            }
 
+            int margin = 516;
+                        
+            DrawRam(2, 260, 0x0000, 16, 16);
+            //DrawRam(2, 182, 0x8000, 16, 16);
+            DrawCPU(margin, 2);
+            DrawCode(margin, 72, 26);
 
+            const int SwatchSize = 6;
 
+            for (int p = 0; p < 8; p++)
+            {
+                for (int s = 0; s < 4; s++)
+                {
+                    int factor = p * (SwatchSize * 5) + s * SwatchSize;
+                    engine.DrawQuadFilled(margin + factor, 340, margin + factor + SwatchSize, 342 + SwatchSize, nes.ppu.GetColorFromPaletteRam((byte)p, (byte)s));
+                    // FillRect(265 + p * (SwatchSize * 5) + s * SwatchSize, 340, SwatchSize, SwatchSize, nes.ppu.GetColorFromPaletteRam(p, s));
+                }
+            }
 
-            DrawRam(2, 2, 0x0000, 16, 16);
-            DrawRam(2, 182, 0x8000, 16, 16);
-            DrawCPU(448, 2);
-            DrawCode(448, 72, 26);
+            engine.DrawQuad(margin + SelectedPalette * (SwatchSize * 5) - 1, 341, margin + SelectedPalette * (SwatchSize * 5) - 1 + (SwatchSize * 4), 341 + SwatchSize, c_white);
+
+            engine.DrawSprite(nes.ppu.GetPatternTable(0, SelectedPalette), margin, 350, Flip.NONE);
+            engine.DrawSprite(nes.ppu.GetPatternTable(1, SelectedPalette), margin + 132, 350, Flip.NONE);
+
+            engine.PixelDimensionTest(4);
+            engine.DrawSprite(nes.ppu.GetScreen(), 0, 0, Flip.NONE);
+
+            //int mouseX, mouseY;
+            //var mousePos = engine.GetMousePos();
+            //mouseX = mousePos.Item1;
+            //mouseY = mousePos.Item2;
+
+            //engine.DrawSprite(testSprite, mouseX, mouseY, Flip.NONE);
         }
 
 
@@ -114,7 +200,7 @@ namespace NES
                 string offset = "$" + Hex(addr, 4) + ": ";
                 for (int col = 0; col < cols; col++)
                 {
-                    offset += " " + Hex(nes.read(addr), 2);
+                    offset += " " + Hex(nes.cpuRead(addr), 2);
                     addr += 1;
                 }
                 engine.DrawText(cX, cY, offset, c_white);
@@ -229,8 +315,8 @@ namespace NES
             //engine.DrawText(230, 28, $"Ticks Passed: {ticksPassed}");
 
 
-            var bus = new Bus();
-            var cpu = new CPU(bus);
+            //var bus = new Bus(enigne);
+            //var cpu = new CPU(bus);
 
             //cpu.status = 0b10101011;
             //engine.DrawText(10, 10, "Status: " + Nice8bits(cpu.status));

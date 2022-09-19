@@ -19,7 +19,10 @@ public class Engine
     public event EventHandler<KeyEventArgs> KeyDown;
     public event EventHandler<KeyEventArgs> KeyUp;
 
-
+    public ulong GetElapsedTime()
+    {
+        return SDL.SDL_GetTicks64();
+    }
 
     protected virtual void OnKeyDown(KeyEventArgs e)
     {
@@ -32,6 +35,14 @@ public class Engine
         EventHandler<KeyEventArgs> handler = KeyUp;
         handler?.Invoke(this, e);
     }
+
+    public (int, int) GetMousePos()
+    {
+        int x, y;
+        uint btn = SDL.SDL_GetMouseState(out x, out y);
+        return (x, y);
+    }
+
 
     private uint[] FontTiles = new uint[] {
         0x00000000, 0x00000000, 0x18181818, 0x00180018, 0x00003636, 0x00000000, 0x367F3636, 0x0036367F,
@@ -146,11 +157,18 @@ public class Engine
             SDL.SDL_RenderSetScale(renderer, windowSize.PixelSize, windowSize.PixelSize);
 
             renderFrame();
+            SDL.SDL_RenderSetScale(renderer, windowSize.PixelSize, windowSize.PixelSize);
 
             SDL.SDL_RenderPresent(renderer);
 
             
         }
+
+    }
+
+    public void PixelDimensionTest(int newdim)
+    {
+        SDL.SDL_RenderSetScale(renderer, newdim, newdim);
 
     }
 
@@ -241,6 +259,31 @@ public class Engine
         SDL.SDL_RenderDrawPoint(renderer, x, y);
     }
 
+    public void DrawSprite(Sprite spr, int x, int y, Flip flip)
+    {
+        int fxs = 0, fxm = 1, fx = 0;
+        int fys = 0, fym = 1, fy = 0;
+
+        if (flip == Flip.HORIZ) { fxs = spr.Width - 1; fxm = -1; }
+        if (flip == Flip.VERT) { fys = spr.Width - 1; fym = -1; }
+
+        fx = fxs;
+        for (int i = 0; i < spr.Width; i++, fx += fxm)
+        {
+            fy = fys;
+            for (int j = 0; j < spr.Height; j++, fy += fym)
+            {
+                DrawPixel(x + i, y + j, spr.GetPixel(fx, fy));
+            }
+        }
+
+    }
+
+    public void DrawPartialSprite(Sprite spr, int x, int y, int imgX, int imgY, int width, int height)
+    {
+
+    }
+
     private void DrawCharTile(int x, int y, int tileIndex, ScreenColor color)
     {
 
@@ -304,7 +347,7 @@ public class Engine
 
     ~Engine()
     {
-        Console.WriteLine("Engine Destructed");
+        //Console.WriteLine("Engine Destructed");
         SDL.SDL_DestroyWindow(window);
         SDL.SDL_DestroyRenderer(renderer);
         //Console.ReadKey();

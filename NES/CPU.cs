@@ -140,12 +140,12 @@ namespace NES
         // Whenever we want to read, we're really wanting the BUS to read - that's where the magic is going to be
         public byte read(ushort a)
         {
-            return bus.read(a);
+            return bus.cpuRead(a);
         }
 
         public void write(ushort a, byte d)
         {
-            bus.write(a, d);
+            bus.cpuWrite(a, d);
         }
 
 
@@ -162,6 +162,8 @@ namespace NES
         /// </summary>
         public void Clock()
         {
+            //Console.WriteLine($"CPUClock: {cycles} cycles left");
+
             // doing everything at once
             if (cycles == 0)
             {
@@ -1118,7 +1120,7 @@ namespace NES
 
                 string outstring = "$" + Hex(addr, 4) + ": ";
 
-                byte op = bus.read((ushort)addr);
+                byte op = bus.cpuRead((ushort)addr);
                 addr++;
                 outstring += lookup[op].Name + " ";
 
@@ -1128,80 +1130,80 @@ namespace NES
                 }
                 else if (lookup[op].AddrMode == IMM)
                 {
-                    value = bus.read((ushort)addr);
+                    value = bus.cpuRead((ushort)addr);
                     addr++;
                     outstring += "#$" + Hex(value, 2) + " {IMM}";
                 }
                 else if (lookup[op].AddrMode == ZP0)
                 {
-                    lo = bus.read((ushort)addr);
+                    lo = bus.cpuRead((ushort)addr);
                     addr++;
                     hi = 0x00;
                     outstring += "$" + Hex(lo, 2) + " {ZP0}";
                 }
                 else if (lookup[op].AddrMode == ZPX)
                 {
-                    lo = bus.read((ushort)addr);
+                    lo = bus.cpuRead((ushort)addr);
                     addr++;
                     hi = 0x00;
                     outstring += "$" + Hex(lo, 2) + " X {ZPX}";
                 }
                 else if (lookup[op].AddrMode == ZPY)
                 {
-                    lo = bus.read((ushort)addr);
+                    lo = bus.cpuRead((ushort)addr);
                     addr++;
                     hi = 0x00;
                     outstring += "$" + Hex(lo, 2) + " Y {ZPY}";
                 }
                 else if (lookup[op].AddrMode == IZX)
                 {
-                    lo = bus.read((ushort)addr);
+                    lo = bus.cpuRead((ushort)addr);
                     addr++;
                     hi = 0x00;
                     outstring += "($" + Hex(lo, 2) + " X) {IZX}";
                 }
                 else if (lookup[op].AddrMode == IZY)
                 {
-                    lo = bus.read((ushort)addr);
+                    lo = bus.cpuRead((ushort)addr);
                     addr++;
                     hi = 0x00;
                     outstring += "($" + Hex(lo, 2) + " Y) {IZY}";
                 }
                 else if (lookup[op].AddrMode == ABS)
                 {
-                    lo = bus.read((ushort)addr);
+                    lo = bus.cpuRead((ushort)addr);
                     addr++;
-                    hi = bus.read((ushort)addr);
+                    hi = bus.cpuRead((ushort)addr);
                     addr++;
                     outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " {ABS}";
                 }
                 else if (lookup[op].AddrMode == ABX)
                 {
-                    lo = bus.read((ushort)addr);
+                    lo = bus.cpuRead((ushort)addr);
                     addr++;
-                    hi = bus.read((ushort)addr);
+                    hi = bus.cpuRead((ushort)addr);
                     addr++;
                     outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " X {ABX}";
                 }
                 else if (lookup[op].AddrMode == ABY)
                 {
-                    lo = bus.read((ushort)addr);
+                    lo = bus.cpuRead((ushort)addr);
                     addr++;
-                    hi = bus.read((ushort)addr);
+                    hi = bus.cpuRead((ushort)addr);
                     addr++;
                     outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " Y {ABY}";
                 }
                 else if (lookup[op].AddrMode == IND)
                 {
-                    lo = bus.read((ushort)addr);
+                    lo = bus.cpuRead((ushort)addr);
                     addr++;
-                    hi = bus.read((ushort)addr);
+                    hi = bus.cpuRead((ushort)addr);
                     addr++;
                     outstring += "($" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + ") {IND}";
                 }
                 else if (lookup[op].AddrMode == REL)
                 {
-                    value = bus.read((ushort)addr);
+                    value = bus.cpuRead((ushort)addr);
                     addr++;
                     outstring += "$" + Hex(value, 2) + " [$" + Hex((ushort)(addr + value), 4) + "] {REL}";
                 }
