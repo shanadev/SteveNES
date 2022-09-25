@@ -131,8 +131,8 @@ namespace NES
             engine.KeyDown += KeyDownHandler;
             engine.KeyUp += KeyUpHandler;
             //
-            //cartridge = new Cartridge("nestest.nes");
-            cartridge = new Cartridge("smb.nes");
+            cartridge = new Cartridge("nestest.nes");
+            //cartridge = new Cartridge("smb.nes");
             //cartridge = new Cartridge("Donkey Kong.nes");
             
 
