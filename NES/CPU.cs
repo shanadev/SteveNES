@@ -1,4 +1,6 @@
 ﻿using System;
+using Serilog;
+
 namespace NES
 {
     /// <summary>
@@ -65,6 +67,7 @@ namespace NES
 
         private void SetFlag(FLAGS6502 f, bool v)
         {
+            //Log.Debug($"SetFlag: {f} to {v}");
             if (v)
             {
                 status |= ((byte)f);
@@ -90,7 +93,9 @@ namespace NES
         private ushort addr_abs = 0x0000;   // The absolute address to grab data
         private ushort addr_rel = 0x0000;   // the relative address to grab data
         private byte opcode = 0x00;         // The instruction code from the program
-        private int cycles = 0;             // keep track of cycles 
+        private int cycles = 0;             // keep track of cycles
+
+        private uint clock_count = 0;
 
         // Here's our instruction array
         private INSTRUCTION[] lookup;
@@ -108,22 +113,22 @@ namespace NES
             // The matrix works in such a way that the given opcode will numerically be the index, starting at 00 at the top left, to 0F, then 10-1F and so on
             lookup = new INSTRUCTION[]
             {
-                new INSTRUCTION("BRK", BRK, IMP, 7), new INSTRUCTION("ORA", ORA, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ORA", ORA, ZP0, 7), new INSTRUCTION("ASL", ASL, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PHP", PHP, IMP, 3), new INSTRUCTION("ORA", ORA, IMM, 2), new INSTRUCTION("ASL", ASL, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ORA", ORA, ABS, 4), new INSTRUCTION("ASL", ASL, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BPL", BPL, REL, 2), new INSTRUCTION("ORA", ORA, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ORA", ORA, ZPX, 7), new INSTRUCTION("ASL", ASL, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CLC", CLC, IMP, 2), new INSTRUCTION("ORA", ORA, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ORA", ORA, ABX, 4), new INSTRUCTION("ASL", ASL, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("JSR", JSR, ABS, 6), new INSTRUCTION("AND", AND, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("BIT", BIT, ZP0, 3), new INSTRUCTION("AND", AND, ZP0, 7), new INSTRUCTION("ROL", ROL, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PLP", PLP, IMP, 4), new INSTRUCTION("AND", AND, IMM, 2), new INSTRUCTION("ROL", ROL, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("BIT", BIT, ABS, 4), new INSTRUCTION("AND", AND, ABS, 4), new INSTRUCTION("ROL", ROL, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BMI", BMI, REL, 2), new INSTRUCTION("AND", AND, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("AND", AND, ZPX, 7), new INSTRUCTION("ROL", ROL, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("SEC", SEC, IMP, 2), new INSTRUCTION("AND", AND, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("AND", AND, ABX, 4), new INSTRUCTION("ROL", ROL, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("RTI", RTI, IMP, 6), new INSTRUCTION("EOR", EOR, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("EOR", EOR, ZP0, 7), new INSTRUCTION("LSR", LSR, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PHA", PHA, IMP, 3), new INSTRUCTION("EOR", EOR, IMM, 2), new INSTRUCTION("LSR", LSR, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("JMP", JMP, ABS, 3), new INSTRUCTION("EOR", EOR, ABS, 4), new INSTRUCTION("LSR", LSR, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BVC", BVC, REL, 2), new INSTRUCTION("EOR", EOR, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("EOR", EOR, ZPX, 7), new INSTRUCTION("LSR", LSR, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CLI", CLI, IMP, 2), new INSTRUCTION("EOR", EOR, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("EOR", EOR, ABX, 4), new INSTRUCTION("LSR", LSR, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("RTS", RTS, IMP, 6), new INSTRUCTION("ADC", ADC, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ADC", ADC, ZP0, 7), new INSTRUCTION("ROR", ROR, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("PLA", PLA, IMP, 4), new INSTRUCTION("ADC", ADC, IMM, 2), new INSTRUCTION("ROR", ROR, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("JMP", JMP, ABS, 6), new INSTRUCTION("ADC", ADC, ABS, 4), new INSTRUCTION("ROR", ROR, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BVS", BVS, REL, 2), new INSTRUCTION("ADC", ADC, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ADC", ADC, ZPX, 7), new INSTRUCTION("ROR", ROR, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("SEI", SEI, IMP, 2), new INSTRUCTION("ADC", ADC, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("ADC", ADC, ABX, 4), new INSTRUCTION("ROR", ROR, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STA", STA, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STY", STY, ZP0, 3), new INSTRUCTION("STA", STA, ZP0, 7), new INSTRUCTION("STX", STX, ZP0, 3), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("DEY", DEY, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("TXA", TXA, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STY", STY, ABS, 4), new INSTRUCTION("STA", STA, ABS, 4), new INSTRUCTION("STX", STX, ABS, 4), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BCC", BCC, REL, 2), new INSTRUCTION("STA", STA, IZY, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STY", STY, ZPX, 4), new INSTRUCTION("STA", STA, ZPX, 7), new INSTRUCTION("STX", STX, ZPY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("TYA", TYA, IMP, 2), new INSTRUCTION("STA", STA, ABY, 5), new INSTRUCTION("TXS", TXS, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("STA", STA, ABX, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("LDY", LDY, IMM, 2), new INSTRUCTION("LDA", LDA, IZX, 6), new INSTRUCTION("LDX", LDX, IMM, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("LDY", LDY, ZP0, 3), new INSTRUCTION("LDA", LDA, ZP0, 7), new INSTRUCTION("LDX", LDX, ZP0, 3), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("TAY", TAY, IMP, 2), new INSTRUCTION("LDA", LDA, IMM, 2), new INSTRUCTION("TAX", TAX, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("LDY", LDY, ABS, 4), new INSTRUCTION("LDA", LDA, ABS, 4), new INSTRUCTION("LDX", LDX, ABS, 4), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BCS", BCS, REL, 2), new INSTRUCTION("LDA", LDA, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("LDY", LDY, ZPX, 4), new INSTRUCTION("LDA", LDA, ZPX, 7), new INSTRUCTION("LDX", LDX, ZPY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CLV", CLV, IMP, 2), new INSTRUCTION("LDA", LDA, ABY, 4), new INSTRUCTION("TSX", TSX, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("LDY", LDY, ABX, 4), new INSTRUCTION("LDA", LDA, ABX, 4), new INSTRUCTION("LDX", LDX, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("CPY", CPY, IMM, 2), new INSTRUCTION("CMP", CMP, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CPY", CPY, ZP0, 3), new INSTRUCTION("CMP", CMP, ZP0, 7), new INSTRUCTION("DEC", DEC, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("INY", INY, IMP, 2), new INSTRUCTION("CMP", CMP, IMM, 2), new INSTRUCTION("DEX", DEX, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CPY", CPY, ABS, 4), new INSTRUCTION("CMP", CMP, ABS, 4), new INSTRUCTION("DEC", DEC, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BNE", BNE, REL, 2), new INSTRUCTION("CMP", CMP, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CMP", CMP, ZPX, 7), new INSTRUCTION("DEC", DEC, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CLD", CLD, IMP, 2), new INSTRUCTION("CMP", CMP, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CMP", CMP, ABX, 4), new INSTRUCTION("DEC", DEC, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("CPX", CPX, IMM, 2), new INSTRUCTION("SBC", SBC, IZX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CPX", CPX, ZP0, 3), new INSTRUCTION("SBC", SBC, ZP0, 7), new INSTRUCTION("INC", INC, ZP0, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("INX", INX, IMP, 2), new INSTRUCTION("SBC", SBC, IMM, 2), new INSTRUCTION("NOP", NOP, IMP, 2), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("CPX", CPX, ABS, 4), new INSTRUCTION("SBC", SBC, ABS, 4), new INSTRUCTION("INC", INC, ABS, 6), new INSTRUCTION("???", XXX, XXX, 1),
-                new INSTRUCTION("BEQ", BEQ, REL, 2), new INSTRUCTION("SBC", SBC, IZY, 5), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("SBC", SBC, ZPX, 7), new INSTRUCTION("INC", INC, ZPX, 6), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("SED", SED, IMP, 2), new INSTRUCTION("SBC", SBC, ABY, 4), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("???", XXX, XXX, 1), new INSTRUCTION("SBC", SBC, ABX, 4), new INSTRUCTION("INC", INC, ABX, 7), new INSTRUCTION("???", XXX, XXX, 1)
+                new INSTRUCTION("BRK", BRK, IMP, 7), new INSTRUCTION("ORA", ORA, IZX, 6), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("???", NOP, IMP, 3), new INSTRUCTION("ORA", ORA, ZP0, 3), new INSTRUCTION("ASL", ASL, ZP0, 5), new INSTRUCTION("???", XXX, IMP, 5), new INSTRUCTION("PHP", PHP, IMP, 3), new INSTRUCTION("ORA", ORA, IMM, 2), new INSTRUCTION("ASL", ASL, IMP, 2), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("ORA", ORA, ABS, 4), new INSTRUCTION("ASL", ASL, ABS, 6), new INSTRUCTION("???", XXX, IMP, 6),
+                new INSTRUCTION("BPL", BPL, REL, 2), new INSTRUCTION("ORA", ORA, IZY, 5), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("ORA", ORA, ZPX, 4), new INSTRUCTION("ASL", ASL, ZPX, 6), new INSTRUCTION("???", XXX, IMP, 6), new INSTRUCTION("CLC", CLC, IMP, 2), new INSTRUCTION("ORA", ORA, ABY, 4), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("???", XXX, IMP, 7), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("ORA", ORA, ABX, 4), new INSTRUCTION("ASL", ASL, ABX, 7), new INSTRUCTION("???", XXX, IMP, 7),
+                new INSTRUCTION("JSR", JSR, ABS, 6), new INSTRUCTION("AND", AND, IZX, 6), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("BIT", BIT, ZP0, 3), new INSTRUCTION("AND", AND, ZP0, 3), new INSTRUCTION("ROL", ROL, ZP0, 5), new INSTRUCTION("???", XXX, IMP, 5), new INSTRUCTION("PLP", PLP, IMP, 4), new INSTRUCTION("AND", AND, IMM, 2), new INSTRUCTION("ROL", ROL, IMP, 2), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("BIT", BIT, ABS, 4), new INSTRUCTION("AND", AND, ABS, 4), new INSTRUCTION("ROL", ROL, ABS, 6), new INSTRUCTION("???", XXX, IMP, 6),
+                new INSTRUCTION("BMI", BMI, REL, 2), new INSTRUCTION("AND", AND, IZY, 5), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("AND", AND, ZPX, 4), new INSTRUCTION("ROL", ROL, ZPX, 6), new INSTRUCTION("???", XXX, IMP, 6), new INSTRUCTION("SEC", SEC, IMP, 2), new INSTRUCTION("AND", AND, ABY, 4), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("???", XXX, IMP, 7), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("AND", AND, ABX, 4), new INSTRUCTION("ROL", ROL, ABX, 7), new INSTRUCTION("???", XXX, IMP, 7),
+                new INSTRUCTION("RTI", RTI, IMP, 6), new INSTRUCTION("EOR", EOR, IZX, 6), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("???", NOP, IMP, 3), new INSTRUCTION("EOR", EOR, ZP0, 3), new INSTRUCTION("LSR", LSR, ZP0, 5), new INSTRUCTION("???", XXX, IMP, 5), new INSTRUCTION("PHA", PHA, IMP, 3), new INSTRUCTION("EOR", EOR, IMM, 2), new INSTRUCTION("LSR", LSR, IMP, 2), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("JMP", JMP, ABS, 3), new INSTRUCTION("EOR", EOR, ABS, 4), new INSTRUCTION("LSR", LSR, ABS, 6), new INSTRUCTION("???", XXX, IMP, 6),
+                new INSTRUCTION("BVC", BVC, REL, 2), new INSTRUCTION("EOR", EOR, IZY, 5), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("EOR", EOR, ZPX, 4), new INSTRUCTION("LSR", LSR, ZPX, 6), new INSTRUCTION("???", XXX, IMP, 6), new INSTRUCTION("CLI", CLI, IMP, 2), new INSTRUCTION("EOR", EOR, ABY, 4), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("???", XXX, IMP, 7), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("EOR", EOR, ABX, 4), new INSTRUCTION("LSR", LSR, ABX, 7), new INSTRUCTION("???", XXX, IMP, 7),
+                new INSTRUCTION("RTS", RTS, IMP, 6), new INSTRUCTION("ADC", ADC, IZX, 6), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("???", NOP, IMP, 3), new INSTRUCTION("ADC", ADC, ZP0, 3), new INSTRUCTION("ROR", ROR, ZP0, 5), new INSTRUCTION("???", XXX, IMP, 5), new INSTRUCTION("PLA", PLA, IMP, 4), new INSTRUCTION("ADC", ADC, IMM, 2), new INSTRUCTION("ROR", ROR, IMP, 2), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("JMP", JMP, IND, 5), new INSTRUCTION("ADC", ADC, ABS, 4), new INSTRUCTION("ROR", ROR, ABS, 6), new INSTRUCTION("???", XXX, IMP, 6),
+                new INSTRUCTION("BVS", BVS, REL, 2), new INSTRUCTION("ADC", ADC, IZY, 5), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("ADC", ADC, ZPX, 4), new INSTRUCTION("ROR", ROR, ZPX, 6), new INSTRUCTION("???", XXX, IMP, 6), new INSTRUCTION("SEI", SEI, IMP, 2), new INSTRUCTION("ADC", ADC, ABY, 4), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("???", XXX, IMP, 7), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("ADC", ADC, ABX, 4), new INSTRUCTION("ROR", ROR, ABX, 7), new INSTRUCTION("???", XXX, IMP, 7),
+                new INSTRUCTION("NOP", NOP, IMM, 2), new INSTRUCTION("STA", STA, IZX, 6), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("STY", STY, ZP0, 3), new INSTRUCTION("STA", STA, ZP0, 3), new INSTRUCTION("STX", STX, ZP0, 3), new INSTRUCTION("???", XXX, IMP, 3), new INSTRUCTION("DEY", DEY, IMP, 2), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("TXA", TXA, IMP, 2), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("STY", STY, ABS, 4), new INSTRUCTION("STA", STA, ABS, 4), new INSTRUCTION("STX", STX, ABS, 4), new INSTRUCTION("???", XXX, IMP, 4),
+                new INSTRUCTION("BCC", BCC, REL, 2), new INSTRUCTION("STA", STA, IZY, 6), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("STY", STY, ZPX, 4), new INSTRUCTION("STA", STA, ZPX, 4), new INSTRUCTION("STX", STX, ZPY, 4), new INSTRUCTION("???", XXX, IMP, 4), new INSTRUCTION("TYA", TYA, IMP, 2), new INSTRUCTION("STA", STA, ABY, 5), new INSTRUCTION("TXS", TXS, IMP, 2), new INSTRUCTION("???", XXX, IMP, 5), new INSTRUCTION("???", XXX, IMP, 5), new INSTRUCTION("STA", STA, ABX, 5), new INSTRUCTION("???", XXX, IMP, 5), new INSTRUCTION("???", XXX, IMP, 5),
+                new INSTRUCTION("LDY", LDY, IMM, 2), new INSTRUCTION("LDA", LDA, IZX, 6), new INSTRUCTION("LDX", LDX, IMM, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("LDY", LDY, ZP0, 3), new INSTRUCTION("LDA", LDA, ZP0, 3), new INSTRUCTION("LDX", LDX, ZP0, 3), new INSTRUCTION("???", XXX, IMP, 3), new INSTRUCTION("TAY", TAY, IMP, 2), new INSTRUCTION("LDA", LDA, IMM, 2), new INSTRUCTION("TAX", TAX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("LDY", LDY, ABS, 4), new INSTRUCTION("LDA", LDA, ABS, 4), new INSTRUCTION("LDX", LDX, ABS, 4), new INSTRUCTION("???", XXX, IMP, 4),
+                new INSTRUCTION("BCS", BCS, REL, 2), new INSTRUCTION("LDA", LDA, IZY, 5), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("LDY", LDY, ZPX, 4), new INSTRUCTION("LDA", LDA, ZPX, 4), new INSTRUCTION("LDX", LDX, ZPY, 4), new INSTRUCTION("???", XXX, IMP, 4), new INSTRUCTION("CLV", CLV, IMP, 2), new INSTRUCTION("LDA", LDA, ABY, 4), new INSTRUCTION("TSX", TSX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 4), new INSTRUCTION("LDY", LDY, ABX, 4), new INSTRUCTION("LDA", LDA, ABX, 4), new INSTRUCTION("LDX", LDX, ABY, 4), new INSTRUCTION("???", XXX, IMP, 4),
+                new INSTRUCTION("CPY", CPY, IMM, 2), new INSTRUCTION("CMP", CMP, IZX, 6), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("CPY", CPY, ZP0, 3), new INSTRUCTION("CMP", CMP, ZP0, 3), new INSTRUCTION("DEC", DEC, ZP0, 5), new INSTRUCTION("???", XXX, IMP, 5), new INSTRUCTION("INY", INY, IMP, 2), new INSTRUCTION("CMP", CMP, IMM, 2), new INSTRUCTION("DEX", DEX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("CPY", CPY, ABS, 4), new INSTRUCTION("CMP", CMP, ABS, 4), new INSTRUCTION("DEC", DEC, ABS, 6), new INSTRUCTION("???", XXX, IMP, 6),
+                new INSTRUCTION("BNE", BNE, REL, 2), new INSTRUCTION("CMP", CMP, IZY, 5), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("CMP", CMP, ZPX, 4), new INSTRUCTION("DEC", DEC, ZPX, 6), new INSTRUCTION("???", XXX, IMP, 6), new INSTRUCTION("CLD", CLD, IMP, 2), new INSTRUCTION("CMP", CMP, ABY, 4), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("???", XXX, IMP, 7), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("CMP", CMP, ABX, 4), new INSTRUCTION("DEC", DEC, ABX, 7), new INSTRUCTION("???", XXX, IMP, 7),
+                new INSTRUCTION("CPX", CPX, IMM, 2), new INSTRUCTION("SBC", SBC, IZX, 6), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("CPX", CPX, ZP0, 3), new INSTRUCTION("SBC", SBC, ZP0, 3), new INSTRUCTION("INC", INC, ZP0, 5), new INSTRUCTION("???", XXX, IMP, 5), new INSTRUCTION("INX", INX, IMP, 2), new INSTRUCTION("SBC", SBC, IMM, 2), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("???", SBC, IMP, 2), new INSTRUCTION("CPX", CPX, ABS, 4), new INSTRUCTION("SBC", SBC, ABS, 4), new INSTRUCTION("INC", INC, ABS, 6), new INSTRUCTION("???", XXX, IMP, 6),
+                new INSTRUCTION("BEQ", BEQ, REL, 2), new INSTRUCTION("SBC", SBC, IZY, 5), new INSTRUCTION("???", XXX, IMP, 2), new INSTRUCTION("???", XXX, IMP, 8), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("SBC", SBC, ZPX, 4), new INSTRUCTION("INC", INC, ZPX, 6), new INSTRUCTION("???", XXX, IMP, 6), new INSTRUCTION("SED", SED, IMP, 2), new INSTRUCTION("SBC", SBC, ABY, 4), new INSTRUCTION("???", NOP, IMP, 2), new INSTRUCTION("???", XXX, IMP, 7), new INSTRUCTION("???", NOP, IMP, 4), new INSTRUCTION("SBC", SBC, ABX, 4), new INSTRUCTION("INC", INC, ABX, 7), new INSTRUCTION("???", XXX, IMP, 7)
             };
 
             // Startup state
@@ -168,6 +173,7 @@ namespace NES
             if (cycles == 0)
             {
                 opcode = read(pc);
+                SetFlag(FLAGS6502.U, true);
                 pc++;
 
                 cycles = lookup[opcode].cycles;
@@ -178,13 +184,18 @@ namespace NES
 
                 cycles += (modeXtraCycle & opXtraCycle);
 
+                //Log.Debug($"CPU Clock - Instruction: {lookup[opcode].Name}");
+                //Log.Debug($"{lookup[opcode].Name} - {clock_count} PC:{Hex(pc,4)} A:{Hex(a,2)} X:{Hex(x,2)} Y:{Hex(y,2)} Status: {(GetFlag(FLAGS6502.N) > 0 ? "N" : ".")}{(GetFlag(FLAGS6502.V) > 0 ? "V" : ".")}{(GetFlag(FLAGS6502.U) > 0 ? "U" : ".")}{(GetFlag(FLAGS6502.B) > 0 ? "B" : ".")}{(GetFlag(FLAGS6502.D) > 0 ? "D" : ".")}{(GetFlag(FLAGS6502.I) > 0 ? "I" : ".")}{(GetFlag(FLAGS6502.Z) > 0 ? "Z" : ".")}{(GetFlag(FLAGS6502.C) > 0 ? "C" : ".")}, Stack: {Hex(stkp,2)}");
+                SetFlag(FLAGS6502.U, true);
             }
 
+            clock_count++;
             cycles--;
         }
 
         public void Reset()
         {
+            //Log.Debug($"CPU Reset");
             a = 0;
             x = 0;
             y = 0;
@@ -196,6 +207,7 @@ namespace NES
             ushort hi = read((ushort)(addr_abs + 1));
 
             pc = (ushort)((hi << 8) | lo);
+            //pc = 0x8000;
 
             addr_rel = 0x0000;
             addr_abs = 0x0000;
@@ -453,22 +465,37 @@ namespace NES
         {
             fetch();
 
-            SetFlag(FLAGS6502.C, ((ushort)(a & 0x80) > 0));
+            ushort temp = (ushort)(fetched << 1);
+            //temp |= GetFlag(FLAGS6502.C);
 
-            if (a == 0)
+            SetFlag(FLAGS6502.C, ((ushort)(fetched & 0x80) > 0));
+            SetFlag(FLAGS6502.Z, (ushort)(temp & 0x00FF) == 0);
+            SetFlag(FLAGS6502.N, (ushort)(temp & 0x80) > 0);
+            if (lookup[opcode].AddrMode == IMP)
             {
-                SetFlag(FLAGS6502.Z, true);
-                return 0;
+                a = (byte)(temp & 0x00FF);
             }
             else
             {
-                a <<= a;
-                if ((ushort)(a & 0x80) > 0)
-                {
-                    SetFlag(FLAGS6502.N, true);
-                }
-                return 0;
+                write(addr_abs, (byte)(temp & 0x00FF));
             }
+            return 0;
+            
+
+            //if (a == 0)
+            //{
+            //    SetFlag(FLAGS6502.Z, true);
+            //    return 0;
+            //}
+            //else
+            //{
+            //    a <<= a;
+            //    if ((ushort)(a & 0x80) > 0)
+            //    {
+            //        SetFlag(FLAGS6502.N, true);
+            //    }
+            //    return 0;
+            //}
 
         }
 
@@ -530,9 +557,10 @@ namespace NES
         public byte BIT()
         {
             fetch();
-            SetFlag(FLAGS6502.Z, (byte)(a & fetched) > 0);
-            SetFlag(FLAGS6502.N, (byte)(fetched & 0x80) > 0);
-            SetFlag(FLAGS6502.V, (byte)(fetched & 0x40) > 0);
+            ushort temp = (ushort)(a & fetched);
+            SetFlag(FLAGS6502.Z, (temp & 0x00FF) == 0);
+            SetFlag(FLAGS6502.N, (byte)(fetched & (1 << 7)) > 0);
+            SetFlag(FLAGS6502.V, (byte)(fetched & (1 << 6)) > 0);
             return 0;
         }
 
@@ -593,22 +621,30 @@ namespace NES
         // Force Interrupt
         public byte BRK()
         {
+            pc++;
+
+            SetFlag(FLAGS6502.I, true);
+
             write((ushort)(0x0100 + stkp), (byte)((pc >> 8) & 0x00FF));
             stkp--;
             write((ushort)(0x0100 + stkp), (byte)(pc & 0x00FF));
             stkp--;
 
- 
+            SetFlag(FLAGS6502.B, true);
+
             write((ushort)(0x0100 + stkp), status);
             stkp--;
+
+            SetFlag(FLAGS6502.B, false);
             
-            addr_abs = 0xFFFE;
-            ushort lo = read((ushort)(addr_abs + 0));
-            ushort hi = read((ushort)(addr_abs + 1));
+            //addr_abs = 0xFFFE;
+            //ushort lo = read((ushort)(addr_abs + 0));
+            //ushort hi = read((ushort)(addr_abs + 1));
 
-            pc = (ushort)((hi << 8) | lo);
+            //pc = (ushort)((hi << 8) | lo);
 
-            SetFlag(FLAGS6502.B, true);
+            pc = (ushort)((ushort)(read(0xFFFE) | read(0xFFFF)) << 8);
+
 
             return 0;
         }
@@ -680,7 +716,8 @@ namespace NES
 
             ushort temp = (ushort)(a - fetched);
             SetFlag(FLAGS6502.C, a >= fetched);
-            SetFlag(FLAGS6502.Z, a == fetched);
+            //SetFlag(FLAGS6502.Z, a == fetched);
+            SetFlag(FLAGS6502.Z, (temp & 0x00FF) == 0);
             SetFlag(FLAGS6502.N, (temp & 0x80) > 0);
 
             return 1;
@@ -692,7 +729,8 @@ namespace NES
 
             ushort temp = (ushort)(x - fetched);
             SetFlag(FLAGS6502.C, x >= fetched);
-            SetFlag(FLAGS6502.Z, x == fetched);
+            //SetFlag(FLAGS6502.Z, x == fetched);
+            SetFlag(FLAGS6502.Z, (temp & 0x00FF) == 0);
             SetFlag(FLAGS6502.N, (temp & 0x80) > 0);
 
             return 0;
@@ -704,7 +742,7 @@ namespace NES
 
             ushort temp = (ushort)(y - fetched);
             SetFlag(FLAGS6502.C, y >= fetched);
-            SetFlag(FLAGS6502.Z, y == fetched);
+            SetFlag(FLAGS6502.Z, (temp & 0x00FF) == 0);
             SetFlag(FLAGS6502.N, (temp & 0x80) > 0);
 
             return 0;
@@ -717,18 +755,18 @@ namespace NES
 
             //addr_abs
             byte result = (byte)(fetched - 1);
+            write(addr_abs, (byte)(result & 0x00FF));
 
-            SetFlag(FLAGS6502.Z, result == 0);
+            SetFlag(FLAGS6502.Z, (result & 0x00FF) == 0);
             SetFlag(FLAGS6502.N, (byte)(result & 0x80) > 0);
 
-            write(addr_abs, result);
 
             return 0;
         }
 
         public byte DEX()
         {
-            x = (byte)(x - 1);
+            x--;
 
             SetFlag(FLAGS6502.Z, x == 0);
             SetFlag(FLAGS6502.N, (byte)(x & 0x80) > 0);
@@ -738,7 +776,7 @@ namespace NES
 
         public byte DEY()
         {
-            y = (byte)(y - 1);
+            y--;
 
             SetFlag(FLAGS6502.Z, y == 0);
             SetFlag(FLAGS6502.N, (byte)(y & 0x80) > 0);
@@ -764,18 +802,18 @@ namespace NES
 
             //addr_abs
             byte result = (byte)(fetched + 1);
+            write(addr_abs, (byte)(result & 0x00FF));
 
             SetFlag(FLAGS6502.Z, result == 0);
             SetFlag(FLAGS6502.N, (byte)(result & 0x80) > 0);
 
-            write(addr_abs, result);
 
             return 0;
         }
 
         public byte INX()
         {
-            x = (byte)(x + 1);
+            x++;
 
             SetFlag(FLAGS6502.Z, x == 0);
             SetFlag(FLAGS6502.N, (byte)(x & 0x80) > 0);
@@ -785,7 +823,7 @@ namespace NES
 
         public byte INY()
         {
-            y = (byte)(y + 1);
+            y++;
 
             SetFlag(FLAGS6502.Z, y == 0);
             SetFlag(FLAGS6502.N, (byte)(y & 0x80) > 0);
@@ -804,8 +842,11 @@ namespace NES
         // Jump to subroutine
         public byte JSR()
         {
-            //push the address (minus 1) of the return point on to the stack
-            write((byte)(0x0100 + stkp), (byte)(pc - 1));
+            pc--;
+
+            write((ushort)(0x0100 + stkp), (byte)((pc >> 8) & 0x00FF));
+            stkp--;
+            write((ushort)(0x0100 + stkp), (byte)(pc & 0x00FF));
             stkp--;
 
             // set program counter to target address
@@ -867,8 +908,14 @@ namespace NES
             SetFlag(FLAGS6502.Z, result == 0);
             SetFlag(FLAGS6502.N, (result & 0x80) > 0);
 
-            write(addr_abs, result);
-
+            if (lookup[opcode].AddrMode == IMP)
+            {
+                a = (byte)(result & 0x00FF);
+            }
+            else
+            {
+                write(addr_abs, (byte)(result & 0x00FF));
+            }
             return 0;
         }
 
@@ -903,14 +950,16 @@ namespace NES
         //push accumulator to the stack
         public byte PHA()
         {
-            write((byte)(0x0100 + stkp), a);
+            write((ushort)(0x0100 + stkp), a);
             stkp--;
             return 0;
         }
 
         public byte PHP()
         {
-            write((byte)(0x0100 + stkp), status);
+            write((ushort)(0x0100 + stkp), (byte)(status | ((byte)FLAGS6502.B) | (byte)FLAGS6502.U));
+            SetFlag(FLAGS6502.B, false);
+            SetFlag(FLAGS6502.U, false);
             stkp--;
             return 0;
         }
@@ -919,7 +968,7 @@ namespace NES
         public byte PLA()
         {
             stkp++;
-            a = read((byte)(0x0100 + stkp));
+            a = read((ushort)(0x0100 + stkp));
             SetFlag(FLAGS6502.Z, a == 0x00);
             SetFlag(FLAGS6502.N, (a & 0x80) > 0);
             return 0;
@@ -929,7 +978,8 @@ namespace NES
         public byte PLP()
         {
             stkp++;
-            status = read((byte)(0x0100 + stkp));
+            status = read((ushort)(0x0100 + stkp));
+            SetFlag(FLAGS6502.U, true);
             return 0;
         }
 
@@ -938,16 +988,22 @@ namespace NES
         {
             fetch();
 
-            byte result = (byte)(fetched << 1);
+            ushort result = (ushort)(fetched << 1); // | GetFlag(FLAGS6502.C));
 
-            result ^= GetFlag(FLAGS6502.C);
+            result |= GetFlag(FLAGS6502.C);
 
             SetFlag(FLAGS6502.C, (byte)(fetched & 0x80) > 0);
+            SetFlag(FLAGS6502.Z, (byte)(result & 0x00FF) == 0);
+            SetFlag(FLAGS6502.N, (result & 0x0080) > 0);
 
-            SetFlag(FLAGS6502.Z, result == 0);
-            SetFlag(FLAGS6502.N, (result & 0x80) > 0);
-
-            write(addr_abs, result);
+            if (lookup[opcode].AddrMode == IMP)
+            {
+                a = (byte)(result & 0x00FF);
+            }
+            else
+            {
+                write(addr_abs, (byte)(result & 0x00FF));
+            }
 
             return 0;
         }
@@ -957,16 +1013,23 @@ namespace NES
         {
             fetch();
 
-            byte result = (byte)(fetched >> 1);
+            byte result = (byte)((GetFlag(FLAGS6502.C) << 7) | (byte)(fetched >> 1));
 
-            result |= GetFlag(FLAGS6502.C);
+            //result |= GetFlag(FLAGS6502.C);
 
             SetFlag(FLAGS6502.C, (byte)(fetched & 0x01) > 0);
 
-            SetFlag(FLAGS6502.Z, result == 0);
+            SetFlag(FLAGS6502.Z, (byte)(fetched & 0x00FF) == 0);
             SetFlag(FLAGS6502.N, (result & 0x80) > 0);
 
-            write(addr_abs, result);
+            if (lookup[opcode].AddrMode == IMP)
+            {
+                a = (byte)(result & 0x00FF);
+            }
+            else
+            {
+                write(addr_abs, (byte)(result & 0x00FF));
+            }
 
             return 0;
         }
@@ -982,7 +1045,7 @@ namespace NES
             stkp++;
             pc = read((ushort)(0x0100 + stkp));
             stkp++;
-            pc |= read((ushort)((0x0100 + stkp) << 8));
+            pc |= (ushort)(read((ushort)(0x0100 + stkp)) << 8);
 
             return 0;
         }
@@ -991,7 +1054,11 @@ namespace NES
         public byte RTS()
         {
             stkp++;
-            pc = read((byte)(0x0100 + stkp));
+            pc = read((ushort)(0x0100 + stkp));
+            stkp++;
+            pc |= (ushort)(read((ushort)(0x0100 + stkp)) << 8);
+
+            pc++;
             return 0;
         }
 
@@ -1006,7 +1073,7 @@ namespace NES
             SetFlag(FLAGS6502.C, temp > 255);
             SetFlag(FLAGS6502.Z, (temp & 0x00FF) == 0);
             SetFlag(FLAGS6502.N, (temp & 0x80) > 0);
-            SetFlag(FLAGS6502.V, (ushort)((~(a ^ fetched)) & (a ^ temp) & 0x0080) > 0);
+            SetFlag(FLAGS6502.V, (ushort)(((a ^ fetched)) & (a ^ temp) & 0x0080) > 0);
             a = (byte)(temp & 0x00FF);
             return 1;
         }
@@ -1107,7 +1174,7 @@ namespace NES
 
         public Dictionary<ushort, string> Disassemble(ushort startAddr, ushort stopAddr)
         {
-            uint addr = startAddr;
+            int addr = startAddr;
             byte value = 0x00;
             byte lo = 0x00;
             byte hi = 0x00;
@@ -1120,7 +1187,7 @@ namespace NES
 
                 string outstring = "$" + Hex(addr, 4) + ": ";
 
-                byte op = bus.cpuRead((ushort)addr);
+                byte op = bus.cpuRead(addr, true);
                 addr++;
                 outstring += lookup[op].Name + " ";
 
@@ -1130,94 +1197,104 @@ namespace NES
                 }
                 else if (lookup[op].AddrMode == IMM)
                 {
-                    value = bus.cpuRead((ushort)addr);
+                    value = bus.cpuRead((ushort)addr, true);
                     addr++;
                     outstring += "#$" + Hex(value, 2) + " {IMM}";
                 }
                 else if (lookup[op].AddrMode == ZP0)
                 {
-                    lo = bus.cpuRead((ushort)addr);
+                    lo = bus.cpuRead(addr, true);
                     addr++;
                     hi = 0x00;
                     outstring += "$" + Hex(lo, 2) + " {ZP0}";
                 }
                 else if (lookup[op].AddrMode == ZPX)
                 {
-                    lo = bus.cpuRead((ushort)addr);
+                    lo = bus.cpuRead(addr, true);
                     addr++;
                     hi = 0x00;
                     outstring += "$" + Hex(lo, 2) + " X {ZPX}";
                 }
                 else if (lookup[op].AddrMode == ZPY)
                 {
-                    lo = bus.cpuRead((ushort)addr);
+                    lo = bus.cpuRead(addr, true);
                     addr++;
                     hi = 0x00;
                     outstring += "$" + Hex(lo, 2) + " Y {ZPY}";
                 }
                 else if (lookup[op].AddrMode == IZX)
                 {
-                    lo = bus.cpuRead((ushort)addr);
+                    lo = bus.cpuRead(addr, true);
                     addr++;
                     hi = 0x00;
                     outstring += "($" + Hex(lo, 2) + " X) {IZX}";
                 }
                 else if (lookup[op].AddrMode == IZY)
                 {
-                    lo = bus.cpuRead((ushort)addr);
+                    lo = bus.cpuRead(addr, true);
                     addr++;
                     hi = 0x00;
                     outstring += "($" + Hex(lo, 2) + " Y) {IZY}";
                 }
                 else if (lookup[op].AddrMode == ABS)
                 {
-                    lo = bus.cpuRead((ushort)addr);
+                    lo = bus.cpuRead(addr, true);
                     addr++;
-                    hi = bus.cpuRead((ushort)addr);
+                    hi = bus.cpuRead(addr, true);
                     addr++;
                     outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " {ABS}";
                 }
                 else if (lookup[op].AddrMode == ABX)
                 {
-                    lo = bus.cpuRead((ushort)addr);
+                    lo = bus.cpuRead(addr, true);
                     addr++;
-                    hi = bus.cpuRead((ushort)addr);
+                    hi = bus.cpuRead(addr, true);
                     addr++;
                     outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " X {ABX}";
                 }
                 else if (lookup[op].AddrMode == ABY)
                 {
-                    lo = bus.cpuRead((ushort)addr);
+                    lo = bus.cpuRead(addr, true);
                     addr++;
-                    hi = bus.cpuRead((ushort)addr);
+                    hi = bus.cpuRead(addr, true);
                     addr++;
                     outstring += "$" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + " Y {ABY}";
                 }
                 else if (lookup[op].AddrMode == IND)
                 {
-                    lo = bus.cpuRead((ushort)addr);
+                    lo = bus.cpuRead((ushort)addr, true);
                     addr++;
-                    hi = bus.cpuRead((ushort)addr);
+                    hi = bus.cpuRead((ushort)addr, true);
                     addr++;
                     outstring += "($" + Hex((ushort)((ushort)(hi << 8) | lo), 4) + ") {IND}";
                 }
                 else if (lookup[op].AddrMode == REL)
                 {
-                    value = bus.cpuRead((ushort)addr);
+                    value = bus.cpuRead(addr, true);
+
+                    ushort rel_addr = value;
+
+                    if ((rel_addr & 0x80) > 0)
+                    {
+                        rel_addr |= 0xFF00;
+                    }
+
                     addr++;
-                    outstring += "$" + Hex(value, 2) + " [$" + Hex((ushort)(addr + value), 4) + "] {REL}";
+                    outstring += "$" + Hex(value, 2) + " [$" + Hex((ushort)(addr + rel_addr), 4) + "] {REL}";
+                    
+
                 }
 
                 output[line_addr] = outstring;
 
 
             }
-
+            
             return output;
         }
 
         // Utilities
-        public static string Hex(uint num, int pad) 
+        public static string Hex(int num, int pad) 
         {
             return Convert.ToString(num, toBase: 16).ToUpper().PadLeft(pad, '0');
         }

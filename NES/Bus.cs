@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Net.NetworkInformation;
 using DisplayEngine;
+using Serilog;
+
 namespace NES
 {
     public unsafe class Bus
@@ -11,8 +14,13 @@ namespace NES
         public byte[] cpuRam = new byte[2048];
         public Cartridge cart;
 
+        public byte[] controller = new byte[2];
+
         private Engine engine;
 
+        private byte[] controller_state = new byte[2];
+
+        private bool controllerStrobe = false;
 
         private uint systemClockCounter = 0;
 
@@ -28,6 +36,7 @@ namespace NES
 
         public void cpuWrite(ushort addr, byte data)
         {
+            //Log.Debug($"CPU Write - addr:0x{Convert.ToString(addr, toBase:16).PadLeft(4,'0')} - data:0x{Convert.ToString(data, toBase: 16).PadLeft(2, '0')}");
             if (cart.cpuWrite(addr, data))  // give cart first crack at the write
             {
 
@@ -40,25 +49,57 @@ namespace NES
             {
                 ppu.cpuWrite((ushort)(addr & 0x0007), data);
             }
+            else if (addr >= 0x4016 && addr <= 0x4017)
+            {
+                if (controllerStrobe && !((data & 0x01) > 0))
+                {
+                    controller_state[addr & 0x0001] = controller[addr & 0x0001];
+                    //controller_state[addr & 0x0001] = 0x01;
+                }
+
+                controllerStrobe = ((data & 0x01) > 0);
+                //Log.Debug($"Write Controller - Strobe: ({(controllerStrobe ? "Y" : "N")}) - state: {Convert.ToString(controller_state[addr & 0x0001], toBase: 2).PadLeft(8, '0')} - data: {Convert.ToString(data, toBase: 2).PadLeft(8, '0')} ");
+
+            }
         }
 
-        public byte cpuRead(ushort addr)
+        public byte cpuRead(int addr, bool readOnly = false)
         {
             byte data = 0x00;
+            //Log.Debug($"CPU Read - addr:0x{Convert.ToString(addr, toBase: 16).PadLeft(4, '0')}");
 
             if (cart.cpuRead(addr, out data))
             {
-                return data;
+                //return data;
             }
             else if (addr >= 0x0000 && addr <= 0x1FFF) // Read from ram - 2k mirrored
             {
-                return cpuRam[addr & 0x07FF];
+                data = cpuRam[addr & 0x07FF];
             }
             else if (addr >= 0x2000 && addr <= 0x3FFF)
             {
-                ppu.cpuRead((ushort)(addr & 0x0007));
+                data = ppu.cpuRead((ushort)(addr & 0x0007), readOnly);
             }
-            return 0x00;
+            else if (addr >= 0x4016 && addr <= 0x4017)
+            {
+                string thing = "";
+                if (controllerStrobe)
+                {
+                    data = (byte)(((controller_state[addr & 0x01] & 0x40) > 0) ? 1 : 0);
+                }
+                else
+                {
+                    thing = Convert.ToString(controller_state[addr & 0x0001], toBase: 2).PadLeft(8, '0');
+
+                    data = (byte)(((controller_state[addr & 0x01] & 0x01) > 0) ? 1 : 0);
+
+                    controller_state[addr & 0x0001] >>= 1;
+
+                }
+                Log.Debug($"Read Controller - Strobe: ({(controllerStrobe ? "Y" : "N")}) - state: {thing} - data: {Convert.ToString(data, toBase: 16).PadLeft(2, '0')} ");
+            }
+            
+            return data;
 
         }
 
@@ -75,7 +116,9 @@ namespace NES
 
         public void Reset()
         {
+            
             cpu.Reset();
+            ppu.Reset();
             systemClockCounter = 0;
         }
 
@@ -89,7 +132,14 @@ namespace NES
                 cpu.Clock();
             }
 
+            if (ppu.nmi)
+            {
+                ppu.nmi = false;
+                cpu.NMI();
+            }
+
             systemClockCounter++;
+
         }
 
     }

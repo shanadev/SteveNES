@@ -11,4 +11,12 @@
   <ItemGroup>
     <ProjectReference Include="..\DisplayEngine\DisplayEngine.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Remove="Serilog" />
+    <None Remove="Serilog.Sinks.File" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Serilog" Version="2.12.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+  </ItemGroup>
 </Project>

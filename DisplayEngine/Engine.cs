@@ -40,7 +40,7 @@ public class Engine
     {
         int x, y;
         uint btn = SDL.SDL_GetMouseState(out x, out y);
-        return (x, y);
+        return (x / windowSize.PixelSize, y / windowSize.PixelSize);
     }
 
 
@@ -273,7 +273,9 @@ public class Engine
             fy = fys;
             for (int j = 0; j < spr.Height; j++, fy += fym)
             {
-                DrawPixel(x + i, y + j, spr.GetPixel(fx, fy));
+                ScreenColor px = spr.GetPixel(fx, fy);
+                DrawPixel(x + i, y + j, px);
+
             }
         }
 
