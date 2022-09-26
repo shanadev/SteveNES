@@ -14,6 +14,8 @@ internal class Program
         //    .CreateLogger();
 
         //Log.Information("Starting up the NES");
+
+        // Start up the NES program
         NESSystem nes = new NESSystem();
     }
 

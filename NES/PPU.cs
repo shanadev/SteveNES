@@ -4,7 +4,9 @@ using DisplayEngine;
 
 namespace NES
 {
-    // Specific structs for PPU registers
+    // Structs for PPU registers - this is my implementation of C++ bitfields in C#
+    // I should be able to access these in the same way
+
     public struct Status
     {
         public byte unused;
@@ -82,6 +84,7 @@ namespace NES
         }
     }
 
+    // This is a way to implement scrolling
     public struct loopy_register
     {
         public ushort coarse_x;
@@ -106,12 +109,15 @@ namespace NES
         }
     }
 
+    // The Picture Processing Unit of the Nintendo - this will be the 2C02
     public class PPU
     {
+        // Registers
         private Status status;
         private Mask mask;
         private PPUCTRL control;
 
+        // For scrolling
         private loopy_register vram_addr;
         private loopy_register tram_addr;
 
@@ -127,21 +133,21 @@ namespace NES
         ushort bg_shifter_attrib_lo = 0x0000;
         ushort bg_shifter_attrib_hi = 0x0000;
 
-        private Random rnd = new Random();
+        //private Random rnd = new Random();
 
         private Cartridge cart;
         private Bus bus;
-        public byte[,] nameTable = new byte[2, 1024];
-        public byte[,] patternTable = new byte[2, 4096];
+        public byte[,] nameTable = new byte[2, 1024];   // The main name table
+        public byte[,] patternTable = new byte[2, 4096];    // The main pattern table
 
-        public ScreenColor[] nesPalette = new ScreenColor[64];
+        public ScreenColor[] nesPalette = new ScreenColor[64];  // our NES color palette
 
-        public bool nmi = false;
+        public bool nmi = false;    // if there is a non-maskable interrupt underway
 
-        private byte[] PaletteTable = new byte[32];
-        private Sprite mainScreen = new Sprite(256, 240);
-        private Sprite[] nameTableSprite = new Sprite[2] { new Sprite(256, 240), new Sprite(256, 240) };
-        private Sprite[] patternTableSprite = new Sprite[2] { new Sprite(128, 128), new Sprite(128, 128) };
+        private byte[] PaletteTable = new byte[32]; // THe palette table that the game will define
+        private Sprite mainScreen = new Sprite(256, 240);   // Sprite reprenting the Television output
+        private Sprite[] nameTableSprite = new Sprite[2] { new Sprite(256, 240), new Sprite(256, 240) }; // sprite to show the nametable
+        private Sprite[] patternTableSprite = new Sprite[2] { new Sprite(128, 128), new Sprite(128, 128) }; // sprite to show pattern table
 
         private int scanline = 0; // row on screen
         private int cycle = 0; // row on screen
@@ -149,11 +155,11 @@ namespace NES
         public bool FrameComplete { get; set; } = false;
         public bool ScanlineComplete { get; set; } = false;
 
-        private byte address_latch = 0x00;
-        private byte ppu_data_buffer = 0x00;
+        private byte address_latch = 0x00;  // when two reads or writes are necessary to get 16 bits when data comes in as 8 bits
+        private byte ppu_data_buffer = 0x00;    // holding one read ahead
         //private ushort ppu_address = 0x0000;  // oversimplification
 
-        private Engine engine;
+        //private Engine engine; // the game engine
 
         public Sprite GetScreen()
         {
@@ -231,9 +237,9 @@ namespace NES
 
 
 
-        public PPU(Bus b, Engine eng)
+        public PPU(Bus b)
         {
-            this.engine = eng;
+            //this.engine = eng;
             bus = b;
 
             nesPalette[0x00] = new ScreenColor(84, 84, 84, 255);

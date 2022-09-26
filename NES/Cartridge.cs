@@ -5,9 +5,10 @@ using System.IO;
 
 namespace NES
 {
-
+    // Class representing a cartridge and the data contained. Has passthrough areas for the mappers
     public class Cartridge
     {
+        // enum for the type of mirroring - sometimes hard-wired on the game chip
         public enum MIRROR
         {
             HORIZONTAL,
@@ -16,9 +17,11 @@ namespace NES
             ONESCREEN_HI
         }
 
+        // Our Program and Character data
         private List<byte> PRG = new List<byte>();
         private List<byte> CHR = new List<byte>();
 
+        // Info from the file
         private byte mapperID = 0;
         private byte PRGbanks = 0;
         private byte CHRbanks = 0;
@@ -34,16 +37,19 @@ namespace NES
         byte tv_system2;
         string unused;
 
+        // The mapper instance that will be set when we know which mapper is needed
         public Mapper mapper;
-        public MIRROR mirror;
+        public MIRROR mirror; // represent the mirror mode
 
+
+        // Constructor - open the file and read it - we're assumiung iNes format
         public Cartridge(string filename)
         {
             // open file in binary and read in the header
             using (BinaryReader binReader = new BinaryReader(File.Open(filename, FileMode.Open)))
             {
+                // Read the header info
                 name = string.Join(null, binReader.ReadChars(4));
-                //Encoding ascii = Encoding.ASCII;
                 prg_rom_chunks = binReader.ReadByte();
                 chr_rom_chunks = binReader.ReadByte();
                 mapper1 = binReader.ReadByte();
@@ -53,14 +59,17 @@ namespace NES
                 tv_system2 = binReader.ReadByte();
                 unused = string.Join(null,binReader.ReadChars(5));
 
+                // Maybe this trainer area
                 if ((byte)(mapper1 & 0x04) > 0)
                 {
                     unused += string.Join(null,binReader.ReadChars(512));
                 }
 
+                // Determine mapper and mirroring
                 mapperID = (byte)((byte)((byte)(mapper2 >> 4) << 4) | (byte)(mapper1 >> 4));
                 mirror = (mapper1 & 0x01) > 0 ? MIRROR.VERTICAL : MIRROR.HORIZONTAL;
 
+                // Hard-coding this for now
                 byte fileType = 1;
 
                 if (fileType == 0)
@@ -70,10 +79,12 @@ namespace NES
 
                 if (fileType == 1)
                 {
+                    // Read in the program data which is next
                     PRGbanks = prg_rom_chunks;
                     byte[] readBytes = binReader.ReadBytes(PRGbanks * 16384);
                     PRG.AddRange(readBytes);
 
+                    // Read in the character data
                     CHRbanks = chr_rom_chunks;
                     byte[] readchrbytes;
                     if (CHRbanks == 0)
@@ -86,11 +97,12 @@ namespace NES
                     }
                     CHR.AddRange(readchrbytes);
 
-                    var asString = string.Empty;
-                    foreach (var inst in PRG)
-                    {
-                        asString += CPU.Hex(inst, 2) + " ";
-                    }
+                    // for debugging
+                    //var asString = string.Empty;
+                    //foreach (var inst in PRG)
+                    //{
+                    //    asString += CPU.Hex(inst, 2) + " ";
+                    //}
 
                     //var asString = string.Join(' ', PRG);
                     //Log.Debug($"{asString}");
@@ -102,6 +114,8 @@ namespace NES
 
                 }
 
+                // Based on mapper id, assign a new mapper instance of the correct
+                // mapper type (Mapper is an Abstract class)
                 switch (mapperID)
                 {
                     case 0:
@@ -114,6 +128,9 @@ namespace NES
             }
 
         }
+
+
+        // Read and Write methods for both the CPU and PPU - all can be overridden by a mapper
 
         public bool cpuRead(int addr, out byte data)
         {

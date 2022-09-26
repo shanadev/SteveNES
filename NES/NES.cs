@@ -4,38 +4,49 @@ using DisplayEngine;
 
 namespace NES
 {
+
+    /// <summary>
+    /// This is the main class that will bring all of the pieces together - those peices being the
+    /// GUI/Game Engine side and the emulator itself
+    /// This class will instantiate a game engine and use it to run the emulation
+    /// </summary>
     public class NESSystem
     {
+        // For random pixels
+        //private Random rnd = new Random();
 
-        private Random rnd = new Random();
-
+        // color swatch
         private ScreenColor c_white = new ScreenColor(255, 255, 255, 255);
         private ScreenColor c_black = new ScreenColor(0, 0, 0, 255);
         private ScreenColor c_red = new ScreenColor(255, 0, 0, 255);
         private ScreenColor c_green = new ScreenColor(0, 255, 0, 255);
         private ScreenColor c_blue = new ScreenColor(0, 0, 255, 255);
+        private ScreenColor c_dgray = new ScreenColor(40, 40, 40, 255);
         private ScreenColor c_gray = new ScreenColor(170, 170, 170, 255);
 
+        // Timing - TODO: Put timing into the game engine
         private ulong lastTick = 1;
         private ulong countedFrames = 1;
         private ulong SCREEN_FPS_CAP = 60;
         private ulong SCREEN_TICKS_PER_FRAME;
-
-        private Dictionary<ushort, string> asm = new Dictionary<ushort, string>();
-
-        private Bus nes;
-
-        private Cartridge cartridge;
-
-        public Settings settings = new Settings();
-        public Engine engine;
-
-        public List<string> KeysPressed = new List<string>();
-
         public bool EmulationRun = false;
         public float ResidualTime = 0.0f;
 
+        // Disassembled program
+        private Dictionary<ushort, string> asm = new Dictionary<ushort, string>();
+
+        // The NES Bus - what really represents the NES + cartridge
+        private Bus nes;
+        private Cartridge cartridge;
+
+        // Game engine
+        public Settings settings = new Settings();
+        public Engine engine;
+
         public byte SelectedPalette = 0x00;
+
+        // Vars for keyboard input -- TODO: Put this stuff into the game engine
+        public List<string> KeysPressed = new List<string>();
 
         private bool a_pressed = false;
         private bool b_pressed = false;
@@ -54,7 +65,13 @@ namespace NES
         private bool l_pressed = false;
         private bool r_pressed = false;
 
+        private bool c_latched = false;
+        private bool space_latched = false;
+        private bool p_latched = false;
+        private bool f_latched = false;
+        private bool l_latched = false;
 
+        // Handle key down event from the game engine
         public void KeyDownHandler(object sender, KeyEventArgs e)
         {
             //KeysPressed.Add(e.KeyCode);
@@ -95,6 +112,7 @@ namespace NES
 
         }
 
+        // key up event from the game engine
         public void KeyUpHandler(object sender, KeyEventArgs e)
         {
 
@@ -107,11 +125,11 @@ namespace NES
             if (e.KeyCode == "SDLK_LEFT") left_pressed = false;
             if (e.KeyCode == "SDLK_RIGHT") right_pressed = false;
 
-            if (e.KeyCode == "SDLK_c") c_pressed = false;
-            if (e.KeyCode == "SDLK_f") f_pressed = false;
-            if (e.KeyCode == "SDLK_l") l_pressed = false;
-            if (e.KeyCode == "SDLK_p") p_pressed = false;
-            if (e.KeyCode == "SDLK_SPACE") space_pressed = false;
+            if (e.KeyCode == "SDLK_c") { c_pressed = false; c_latched = false; }
+            if (e.KeyCode == "SDLK_f") { f_pressed = false; f_latched = false; }
+            if (e.KeyCode == "SDLK_l") { l_pressed = false; l_latched = false; }
+            if (e.KeyCode == "SDLK_p") { p_pressed = false; p_latched = false; }
+            if (e.KeyCode == "SDLK_SPACE") { space_pressed = false; space_latched = false; }
             if (e.KeyCode == "SDLK_r") r_pressed = false;
             if (e.KeyCode == "SDLK_q") q_pressed = false;
 
@@ -119,27 +137,46 @@ namespace NES
 
         //public Sprite testSprite = new Sprite("controller.png");
 
+        // Constructor
         public NESSystem()
         {
-
-
-            nes = new Bus(engine);
-
-            SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS_CAP;
+            // instantiate the game engine - set the key event handlers
             engine = new Engine(settings.WindowSettings[WindowSettingTypes.CPUView], "SteveNES");
-
             engine.KeyDown += KeyDownHandler;
             engine.KeyUp += KeyUpHandler;
-            //
+
+            // instantiate the NES - inject the game engine dependency
+            nes = new Bus();
+
+            // Set up timer information
+            SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS_CAP;
+
+            // Load that cartridge
             cartridge = new Cartridge("nestest.nes");
             //cartridge = new Cartridge("smb.nes");
             //cartridge = new Cartridge("Donkey Kong.nes");
+            //cartridge = new Cartridge("1942 (Japan, USA).nes");
+            //cartridge = new Cartridge("Kung Fu (Japan, USA).nes");
+            //cartridge = new Cartridge("Excitebike (Japan, USA).nes");
             
 
             nes.InsertCartridge(cartridge);
 
+            // DISASSEMBLE - and a way to log it
+            asm = nes.cpu.Disassemble(0x0000, 0xFFFF);
+            //var asString = string.Join(Environment.NewLine, asm);
+            //Log.Debug($"{asString}");
+
+            // Reset the CPU
+            nes.cpu.Reset();
 
 
+            // Finally - run the game engine which will call the function sent
+            // to it as rapidly as possible
+            engine.Run(renderFrame: RenderFrame);
+
+
+            // Old test code
             //string program = "A20A8E0000A2038E0100AC0000A900186D010088D0FA8D0200EAEAEA";
             //byte[] progbytes = Convert.FromHexString(program);
             //ushort offset = 0x8000;
@@ -152,26 +189,17 @@ namespace NES
             //nes.cpuRam[0xFFFC] = 0x00;
             //nes.cpuRam[0xFFFD] = 0x80;
 
-            // get dissasembly
 
-            asm = nes.cpu.Disassemble(0x0000, 0xFFFF);
-            //var asString = string.Join(Environment.NewLine, asm);
-            //Log.Debug($"{asString}");
-
-            // reset
-            nes.cpu.Reset();
-
-
-
-            engine.Run(renderFrame: RenderFrame);
         }
 
-        // Called by the display engine
+        // Called by the display engine - called as quickly as possible
         public void RenderFrame()
         {
-            engine.ClearScreen(c_blue);
+            // clear the screen
+            engine.ClearScreen(c_dgray);
 
-
+            // Read the controller status from the keyboard into the controller - simulate the PISO
+            // this will be the current state of the controller
             nes.controller[0] = 0x00;
             nes.controller[0] |= (byte)(a_pressed ? 0x01 : 0x00);
             nes.controller[0] |= (byte)(b_pressed ? 0x02 : 0x00);
@@ -182,18 +210,27 @@ namespace NES
             nes.controller[0] |= (byte)(left_pressed ? 0x40 : 0x00);
             nes.controller[0] |= (byte)(right_pressed ? 0x80 : 0x00);
 
-            if (space_pressed) EmulationRun = !EmulationRun;
-            if (r_pressed) nes.Reset();
-            if (q_pressed) engine.Quit();
-            if (p_pressed)
+            // Handle more key input
+            if (space_pressed && !space_latched)    // Space = run the emulation striaght up, stop only when I hit space again
+            {
+                EmulationRun = !EmulationRun;
+                space_latched = true;
+            }
+            if (r_pressed) nes.Reset();     // Reset the system
+            if (q_pressed) engine.Quit();   // quit
+            if (p_pressed && !p_latched)    // Change the viewing palette applied to the viewable pattern table
             {
                 ++SelectedPalette;
                 SelectedPalette &= 0x07;
+                p_latched = true;
             }
 
 
             if (EmulationRun)
             {
+                // The idea is to wait untl residual time is up - waiting for the next frame
+                // to stay at 60 per second. This is assuming my emulation is going to be
+                // fast enough!
                 if (ResidualTime > 0.0f)
                 {
                     ResidualTime -= engine.GetElapsedTime() / 1000;
@@ -205,9 +242,9 @@ namespace NES
                     nes.ppu.FrameComplete = false;
                 }
             }
-            else
+            else // else we're running in step mode
             {
-                if (c_pressed)
+                if (c_pressed && !c_latched) // c to step one line at a time
                 {
                     while (!nes.cpu.Complete())
                     {
@@ -217,9 +254,10 @@ namespace NES
                     {
                         nes.Clock();
                     }
+                    c_latched = true;
                 }
 
-                if (l_pressed)
+                if (l_pressed && !l_latched)  // l to step one scanline at a time
                 {
                     while (!nes.ppu.ScanlineComplete)
                     {
@@ -230,9 +268,10 @@ namespace NES
                         nes.Clock();
                     }
                     nes.ppu.ScanlineComplete = false;
+                    l_latched = true;
                 }
 
-                if (f_pressed)
+                if (f_pressed && !f_latched)    // f to step one while frame at a time
                 {
                     while (!nes.ppu.FrameComplete)
                     {
@@ -243,19 +282,30 @@ namespace NES
                         nes.Clock();
                     }
                     nes.ppu.FrameComplete = false;
+                    f_latched = true;
                 }
             }
 
-            int margin = 450;
+
+            // Draw crap to the screen - Start with the emulation screen sprite:
+            engine.PixelDimensionTest(3);   // scale the screen by 3
+            engine.DrawSprite(nes.ppu.GetScreen(), 0, 0, Flip.NONE);
+            engine.PixelDimensionTest(2);   // put the scale back
+            // TODO: formalize this scaling feature
+
+            int margin = 390;
                         
             //DrawRam(2, 260, 0x0000, 16, 16);
             //DrawRam(2, 182, 0x8000, 16, 16);
-            DrawCPU(margin, 2);
-            DrawCode(margin, 72, 26);
-            DrawRam(2, 365, 0x0000, 16, 16);
+            DrawCPU(margin, 2);         // Draw CPU information
+            DrawCode(margin, 80, 25);       // Draw the disassembled code
+            DrawRam(2, 365, 0x0000, 16, 16);    // Draw the zero page of RAM
 
-            engine.DrawText(margin + 100, 30, Convert.ToString(nes.controller[0], toBase: 2).PadLeft(8, '0') + " [" + nes.controller[0] + "]", c_white);
+            DrawController(610, 12);    // Draw the controller info
 
+            // Draw the palettes and pattern tables
+            margin = 450;
+            int downfactor = 40;
             const int SwatchSize = 6;
 
             for (int p = 0; p < 8; p++)
@@ -263,19 +313,17 @@ namespace NES
                 for (int s = 0; s < 4; s++)
                 {
                     int factor = p * (SwatchSize * 5) + s * SwatchSize;
-                    engine.DrawQuadFilled(margin + factor, 341, margin + factor + SwatchSize, 341 + SwatchSize, nes.ppu.GetColorFromPaletteRam((byte)p, (byte)s));
+                    engine.DrawQuadFilled(margin + factor, 341 + 40, margin + factor + SwatchSize, 341 + 40 + SwatchSize, nes.ppu.GetColorFromPaletteRam((byte)p, (byte)s));
                     // FillRect(265 + p * (SwatchSize * 5) + s * SwatchSize, 340, SwatchSize, SwatchSize, nes.ppu.GetColorFromPaletteRam(p, s));
                 }
             }
 
-            engine.DrawQuad(margin + SelectedPalette * (SwatchSize * 5) - 1, 341, margin + SelectedPalette * (SwatchSize * 5) + (SwatchSize * 4), 341 + SwatchSize, c_white);
+            engine.DrawQuad(margin + SelectedPalette * (SwatchSize * 5) - 1, 341 + 40, margin + SelectedPalette * (SwatchSize * 5) + (SwatchSize * 4), 341 + 40 + SwatchSize, c_white);
 
-            engine.DrawSprite(nes.ppu.GetPatternTable(0, SelectedPalette), margin, 350, Flip.NONE);
-            engine.DrawSprite(nes.ppu.GetPatternTable(1, SelectedPalette), margin + 132, 350, Flip.NONE);
+            engine.DrawSprite(nes.ppu.GetPatternTable(0, SelectedPalette), margin, 350 + 40, Flip.NONE);
+            engine.DrawSprite(nes.ppu.GetPatternTable(1, SelectedPalette), margin + 132, 350 + 40, Flip.NONE);
 
-            engine.PixelDimensionTest(3);
-            engine.DrawSprite(nes.ppu.GetScreen(), 0, 0, Flip.NONE);
-            engine.PixelDimensionTest(2);
+
 
             //for (int y = 0; y < 30; y++)
             //{
@@ -287,18 +335,39 @@ namespace NES
             //    }
             //}
 
-
+            // Get mouse information, draw coordinates of the mouse to position shit
             //int mouseX, mouseY;
             //var mousePos = engine.GetMousePos();
             //mouseX = mousePos.Item1;
             //mouseY = mousePos.Item2;
-
             //engine.DrawText(mouseX, mouseY, $"({mouseX},{mouseY})", c_white);
 
-            //engine.DrawSprite(testSprite, mouseX, mouseY, Flip.NONE);
+
         }
 
+        // helper function to draw the controller input
+        public void DrawController(int x, int y)
+        {
+            nes.controller[0] |= (byte)(a_pressed ? 0x01 : 0x00);
+            nes.controller[0] |= (byte)(b_pressed ? 0x02 : 0x00);
+            nes.controller[0] |= (byte)(sel_pressed ? 0x04 : 0x00);
+            nes.controller[0] |= (byte)(st_pressed ? 0x08 : 0x00);
+            nes.controller[0] |= (byte)(up_pressed ? 0x10 : 0x00);
+            nes.controller[0] |= (byte)(down_pressed ? 0x20 : 0x00);
+            nes.controller[0] |= (byte)(left_pressed ? 0x40 : 0x00);
+            nes.controller[0] |= (byte)(right_pressed ? 0x80 : 0x00);
 
+            engine.DrawText(x, y, Convert.ToString(nes.controller[0] & 0x01, toBase:2).PadLeft(1,'0') + " A (x)", c_white);
+            engine.DrawText(x, y+8, Convert.ToString((nes.controller[0] >> 1) & 0x01, toBase:2).PadLeft(1,'0') + " B (z)", c_white);
+            engine.DrawText(x, y+8*2, Convert.ToString((nes.controller[0] >> 2) & 0x01, toBase:2).PadLeft(1,'0') + " Sel (a)", c_white);
+            engine.DrawText(x, y+8*3, Convert.ToString((nes.controller[0] >> 3) & 0x01, toBase:2).PadLeft(1,'0') + " St (s)", c_white);
+            engine.DrawText(x, y + 8 * 4, Convert.ToString((nes.controller[0] >> 4) & 0x01, toBase:2).PadLeft(1,'0') + " U (up)", c_white);
+            engine.DrawText(x, y + 8 * 5, Convert.ToString((nes.controller[0] >> 5) & 0x01, toBase:2).PadLeft(1,'0') + " D (dn)", c_white);
+            engine.DrawText(x, y + 8 * 6, Convert.ToString((nes.controller[0] >> 6) & 0x01, toBase:2).PadLeft(1,'0') + " L (lt)", c_white);
+            engine.DrawText(x, y + 8 * 7, Convert.ToString((nes.controller[0] >> 7) & 0x01, toBase:2).PadLeft(1,'0') + " R (rt)", c_white);
+        }
+
+        // Drawing memory
         public void DrawRam(int x, int y, ushort addr, int rows, int cols)
         {
             int cX = x;
@@ -317,6 +386,7 @@ namespace NES
             }
         }
 
+        // Drawing CPU information
         public void DrawCPU(int x, int y)
         {
             string status = "STATUS: ";
@@ -336,13 +406,11 @@ namespace NES
             engine.DrawText(x, y + 50, "Stack P: $" + Hex(nes.cpu.stkp, 4), c_white);
         }
 
+        // Draw code lines using disassembled code
         public void DrawCode(int x, int y, int lines)
         {
-            //int lineitem = Array.IndexOf(asm.Keys.ToList<INSTRUCTION>(), nes.cpu.pc);
             int lineitem = asm.Keys.ToList().IndexOf(nes.cpu.pc);
-            //lineitem = asm[nes.cpu.pc].;
 
-            //lineitem = Array.FindIndex<INSTRUCTION>(asm, row => row.)
             int lineY = (lines >> 1) * 10 + y;
 
             //if (lineitem > 0)
@@ -353,7 +421,7 @@ namespace NES
                 }
                 catch (Exception ex)
                 {
-                    engine.DrawText(x, lineY, "NOT FOUND", c_white);
+                    engine.DrawText(x, lineY, "NO DATA", c_white);
                 }
                 while (lineY < (lines * 10) + y)
                 {
@@ -397,76 +465,16 @@ namespace NES
 
         }
 
+        // Gimme hex
         public static string Hex(uint num, int pad)
         {
             return Convert.ToString(num, toBase: 16).ToUpper().PadLeft(pad, '0');
         }
 
-
+        // for debugging, show me bits
         private static string Nice8bits(byte input)
         {
             return "0b" + Convert.ToString(input, toBase: 2).PadLeft(8, '0');
-        }
-
-
-
-
-
-        public void TestShit()
-        {
-            //Console.WriteLine("Render frame");
-
-            //ScreenColor myColor = new ScreenColor(200, 240, 243, 255);
-            //engine.DrawPixel(100, 100, myColor);
-
-            //for (int x = 0; x < 254; x++)
-            //{
-            //    for (int y = 0; y < 240; y++)
-            //    {
-            //        engine.DrawPixel(x, y, new ScreenColor((byte)rnd.Next(255), (byte)rnd.Next(255), (byte)rnd.Next(255), 255));
-
-            //        //
-            //    }
-            //}
-
-            //engine.DrawText(10, 10, "This is some text! You like it, bitch!");
-
-            engine.ClearScreen(c_black);
-
-            //engine.DrawLine(10, 10, 30, 50, c_blue);
-            //engine.DrawQuad(50, 30, 100, 100, c_red);
-            //engine.DrawQuadFilled(120, 120, 200, 200, c_green);
-
-            var ticks = engine.GetTicks();
-            if (ticks == 0) ticks = 1;
-            var fps = countedFrames / (float)(ticks / 1000);
-            if (fps > 2000000)
-            {
-                fps = 0;
-            }
-            var ticksPassed = ticks - lastTick;
-            //engine.DrawText(230, 10, $"{ticks}");
-            //engine.DrawText(230, 19, $"FPS Avg: {fps}");
-            //engine.DrawText(230, 28, $"Ticks Passed: {ticksPassed}");
-
-
-            //var bus = new Bus(enigne);
-            //var cpu = new CPU(bus);
-
-            //cpu.status = 0b10101011;
-            //engine.DrawText(10, 10, "Status: " + Nice8bits(cpu.status));
-            //cpu.SetFlag(CPU.FLAGS6502.V, true);
-            //cpu.SetFlag(CPU.FLAGS6502.N, false);
-            //engine.DrawText(10, 19, "Set V:  " + Nice8bits(cpu.status));
-
-
-            lastTick = ticks;
-            countedFrames++;
-
-            //if (ticksPassed < SCREEN_TICKS_PER_FRAME)
-            //{
-            //    engine.Delay(SCREEN_TICKS_PER_FRAME - ticksPassed);
-            //}
         }
 
 
