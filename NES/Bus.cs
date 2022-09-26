@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net.NetworkInformation;
 using DisplayEngine;
-using Serilog;
+//using Serilog;
 
 namespace NES
 {
@@ -96,7 +96,7 @@ namespace NES
                     controller_state[addr & 0x0001] >>= 1;
 
                 }
-                Log.Debug($"Read Controller - Strobe: ({(controllerStrobe ? "Y" : "N")}) - state: {thing} - data: {Convert.ToString(data, toBase: 16).PadLeft(2, '0')} ");
+                //Log.Debug($"Read Controller - Strobe: ({(controllerStrobe ? "Y" : "N")}) - state: {thing} - data: {Convert.ToString(data, toBase: 16).PadLeft(2, '0')} ");
             }
             
             return data;

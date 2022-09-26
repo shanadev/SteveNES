@@ -1,6 +1,6 @@
 ﻿using System;
 using DisplayEngine;
-using Serilog;
+//using Serilog;
 
 namespace NES
 {
@@ -680,7 +680,7 @@ namespace NES
                                                         + (vram_addr.fine_y) + 0));
                             break;
                         case 6:
-                            bg_next_tile_lsb = ppuRead((ushort)((control.pattern_background << 12)
+                            bg_next_tile_msb = ppuRead((ushort)((control.pattern_background << 12)
                             + ((ushort)(bg_next_tile_id << 4))
                             + (vram_addr.fine_y) + 8));
                             break;
