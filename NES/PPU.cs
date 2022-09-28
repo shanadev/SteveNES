@@ -824,7 +824,7 @@ namespace NES
                                 {
                                     for (int j = 0; j < 4; j++)
                                     {
-                                        spriteScanline[spriteCount + j] = OAM[OAMEntry * 4 + j];
+                                        spriteScanline[spriteCount * 4 + j] = OAM[OAMEntry * 4 + j];
                                     }
                                     spriteCount++;
                                 }

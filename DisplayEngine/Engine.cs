@@ -13,6 +13,7 @@ public class Engine
     private IntPtr renderer = IntPtr.Zero;
     private bool quitFlag = false;
     private WindowSize windowSize;
+   
 
     public delegate void RenderFrameDelegate();
 
@@ -125,6 +126,19 @@ public class Engine
         catch (ApplicationException ex)
         {
             Console.WriteLine($"Problem Initializing Graphics: {ex.Message}");
+        }
+
+    }
+
+    public string WindowTitle
+    {
+        get
+        {
+            return SDL.SDL_GetWindowTitle(window);
+        }
+        set
+        {
+            SDL.SDL_SetWindowTitle(window, value);
         }
 
     }

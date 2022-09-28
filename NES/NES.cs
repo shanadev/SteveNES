@@ -31,6 +31,7 @@ namespace NES
         private ulong SCREEN_TICKS_PER_FRAME;
         public bool EmulationRun = false;
         public float ResidualTime = 0.0f;
+        public float lastTime = 0.0f;
 
         // Disassembled program
         private Dictionary<ushort, string> asm = new Dictionary<ushort, string>();
@@ -141,7 +142,7 @@ namespace NES
         public NESSystem()
         {
             // instantiate the game engine - set the key event handlers
-            engine = new Engine(settings.WindowSettings[WindowSettingTypes.CPUView], "SteveNES");
+            engine = new Engine(settings.WindowSettings[WindowSettingTypes.NES_Triple], "SteveNES");
             engine.KeyDown += KeyDownHandler;
             engine.KeyUp += KeyUpHandler;
 
@@ -153,8 +154,8 @@ namespace NES
 
             // Load that cartridge
             //cartridge = new Cartridge("nestest.nes");
-            cartridge = new Cartridge("smb.nes");
-            //cartridge = new Cartridge("Donkey Kong.nes");
+            //cartridge = new Cartridge("smb.nes");
+            cartridge = new Cartridge("Donkey Kong.nes");
             //cartridge = new Cartridge("1942 (Japan, USA).nes");
             //cartridge = new Cartridge("Kung Fu (Japan, USA).nes");
             //cartridge = new Cartridge("Excitebike (Japan, USA).nes");
@@ -195,6 +196,26 @@ namespace NES
         // Called by the display engine - called as quickly as possible
         public void RenderFrame()
         {
+
+            float fpsvalue;
+            string fps = "";
+            var currTime = (engine.GetElapsedTime() / 1000);
+
+            if (currTime == 0)
+            {
+                fps = "xx";
+            }
+            else
+            {
+                fpsvalue = countedFrames / currTime;
+                fps = fpsvalue.ToString();
+            }
+
+            engine.WindowTitle = "SteveNES FPS:" + fps;
+
+            countedFrames++;
+
+
             // clear the screen
             engine.ClearScreen(c_dgray);
 
@@ -288,47 +309,47 @@ namespace NES
 
 
             // Draw crap to the screen - Start with the emulation screen sprite:
-            engine.PixelDimensionTest(3);   // scale the screen by 3
+            //engine.PixelDimensionTest(3);   // scale the screen by 3
             engine.DrawSprite(nes.ppu.GetScreen(), 0, 0, Flip.NONE);
-            engine.PixelDimensionTest(2);   // put the scale back
+            //engine.PixelDimensionTest(2);   // put the scale back
             // TODO: formalize this scaling feature
 
-            int margin = 390;
+            //int margin = 390;
                         
             //DrawRam(2, 260, 0x0000, 16, 16);
             //DrawRam(2, 182, 0x8000, 16, 16);
-            DrawCPU(margin, 150);         // Draw CPU information
+            //DrawCPU(margin, 150);         // Draw CPU information
             //DrawCode(margin, 80, 25);       // Draw the disassembled code
 
             //engine.PixelDimensionTest(1);
-            DrawOAM(margin, 230, 24);    /// draw top OAM entries
+            //DrawOAM(margin, 230, 24);    /// draw top OAM entries
             //engine.PixelDimensionTest(2);
             //DrawRam(2, 365, 0x0000, 16, 16);    // Draw the zero page of RAM
 
 
 
-            DrawController(610, 150);    // Draw the controller info
+            //DrawController(610, 150);    // Draw the controller info
 
             // Draw the palettes and pattern tables
-            margin = 390;
-            int starty = 5;
-            //int downfactor = 40;
-            const int SwatchSize = 6;
+            //margin = 390;
+            //int starty = 5;
+            ////int downfactor = 40;
+            //const int SwatchSize = 6;
 
-            for (int p = 0; p < 8; p++)
-            {
-                for (int s = 0; s < 4; s++)
-                {
-                    int factor = p * (SwatchSize * 5) + s * SwatchSize;
-                    engine.DrawQuadFilled(margin + factor, starty, margin + factor + SwatchSize, starty + SwatchSize, nes.ppu.GetColorFromPaletteRam((byte)p, (byte)s));
-                    // FillRect(265 + p * (SwatchSize * 5) + s * SwatchSize, 340, SwatchSize, SwatchSize, nes.ppu.GetColorFromPaletteRam(p, s));
-                }
-            }
+            //for (int p = 0; p < 8; p++)
+            //{
+            //    for (int s = 0; s < 4; s++)
+            //    {
+            //        int factor = p * (SwatchSize * 5) + s * SwatchSize;
+            //        engine.DrawQuadFilled(margin + factor, starty, margin + factor + SwatchSize, starty + SwatchSize, nes.ppu.GetColorFromPaletteRam((byte)p, (byte)s));
+            //        // FillRect(265 + p * (SwatchSize * 5) + s * SwatchSize, 340, SwatchSize, SwatchSize, nes.ppu.GetColorFromPaletteRam(p, s));
+            //    }
+            //}
 
-            engine.DrawQuad(margin + SelectedPalette * (SwatchSize * 5) - 1, starty, margin + SelectedPalette * (SwatchSize * 5) + (SwatchSize * 4), starty + SwatchSize, c_white);
+            //engine.DrawQuad(margin + SelectedPalette * (SwatchSize * 5) - 1, starty, margin + SelectedPalette * (SwatchSize * 5) + (SwatchSize * 4), starty + SwatchSize, c_white);
 
-            engine.DrawSprite(nes.ppu.GetPatternTable(0, SelectedPalette), margin, starty + 9, Flip.NONE);
-            engine.DrawSprite(nes.ppu.GetPatternTable(1, SelectedPalette), margin + 132, starty + 9, Flip.NONE);
+            //engine.DrawSprite(nes.ppu.GetPatternTable(0, SelectedPalette), margin, starty + 9, Flip.NONE);
+            //engine.DrawSprite(nes.ppu.GetPatternTable(1, SelectedPalette), margin + 132, starty + 9, Flip.NONE);
 
 
 
