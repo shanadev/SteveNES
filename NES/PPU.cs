@@ -167,10 +167,12 @@ namespace NES
 
         // for sprite drawing
         private byte[] spriteScanline = new byte[8 * 4]; // as in 8 4-byte sprites
-        int spriteCount;
-        byte[] sprite_shifter_pattern_lo = new byte[8];
-        byte[] sprite_shifter_pattern_hi = new byte[8];
+        private int spriteCount;
+        private byte[] sprite_shifter_pattern_lo = new byte[8];
+        private byte[] sprite_shifter_pattern_hi = new byte[8];
 
+        private bool spriteZeroHitPossible = false;
+        private bool spriteZeroBeingRendered = false;
 
         // For scrolling
         private loopy_register vram_addr;
@@ -740,7 +742,7 @@ namespace NES
                 if (scanline == -1 && cycle == 1)
                 {
                     status.vertical_blank = 0;
-
+                    status.sprite_zero_hit = 0;
                     status.sprite_overflow = 0;
 
                     for (int i = 0; i < 8; i++)
@@ -815,6 +817,7 @@ namespace NES
                         spriteCount = 0;
 
                         byte OAMEntry = 0; // represents all 4 bytes
+                        spriteZeroHitPossible = false;
                         while (OAMEntry < 64 && spriteCount < 9)
                         {
                             int diff = (int)scanline - (int)OAM[OAMEntry * 4];
@@ -822,6 +825,10 @@ namespace NES
                             {
                                 if (spriteCount < 8)
                                 {
+                                    if (OAMEntry == 0)
+                                    {
+                                        spriteZeroHitPossible = true;
+                                    }
                                     for (int j = 0; j < 4; j++)
                                     {
                                         spriteScanline[spriteCount * 4 + j] = OAM[OAMEntry * 4 + j];
@@ -963,6 +970,8 @@ namespace NES
 
             if (mask.render_sprites > 0)
             {
+                spriteZeroBeingRendered = false;
+
                 for (int i = 0; i < spriteCount; i++)
                 {
                     if (spriteScanline[i * 4 + 3] == 0)
@@ -976,6 +985,11 @@ namespace NES
 
                         if (fg_pixel != 0)
                         {
+                            if (i == 0)
+                            {
+                                spriteZeroBeingRendered = true;
+                            }
+
                             break;
                         }
                     }
@@ -1011,6 +1025,27 @@ namespace NES
                 {
                     pixel = bg_pixel;
                     palette = bg_palette;
+                }
+
+                if (spriteZeroHitPossible && spriteZeroBeingRendered)
+                {
+                    if ((mask.render_background & mask.render_sprites) > 0)
+                    {
+                        if (~(mask.render_background_left | mask.render_sprites_left) > 0)
+                        {
+                            if (cycle >= 9 && cycle < 258)
+                            {
+                                status.sprite_zero_hit = 1;
+                            }
+                        }
+                        else
+                        {
+                            if (cycle >= 1 && cycle < 258)
+                            {
+                                status.sprite_zero_hit = 1;
+                            }
+                        }
+                    }
                 }
             }
 

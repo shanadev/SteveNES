@@ -154,8 +154,8 @@ namespace NES
 
             // Load that cartridge
             //cartridge = new Cartridge("nestest.nes");
-            //cartridge = new Cartridge("smb.nes");
-            cartridge = new Cartridge("Donkey Kong.nes");
+            cartridge = new Cartridge("smb.nes");
+            //cartridge = new Cartridge("Donkey Kong.nes");
             //cartridge = new Cartridge("1942 (Japan, USA).nes");
             //cartridge = new Cartridge("Kung Fu (Japan, USA).nes");
             //cartridge = new Cartridge("Excitebike (Japan, USA).nes");
