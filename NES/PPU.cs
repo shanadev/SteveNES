@@ -109,6 +109,42 @@ namespace NES
         }
     }
 
+
+    //public struct ObjectAttributeMemory
+    //{
+    //    public byte y;
+    //    public byte id;
+    //    public byte attribute;
+    //    public byte x;
+
+    //    public byte[] ToArray()
+    //    {
+    //        MemoryStream stream = new MemoryStream();
+    //        BinaryWriter writer = new BinaryWriter(stream);
+
+    //        writer.Write(this.y);
+    //        writer.Write(this.id);
+    //        writer.Write(this.attribute);
+    //        writer.Write(this.x);
+
+    //        return stream.ToArray();
+    //    }
+
+    //    public static ObjectAttributeMemory FromArray(byte[] bytes)
+    //    {
+    //        BinaryReader reader = new BinaryReader(new MemoryStream(bytes));
+    //        ObjectAttributeMemory oamItem = default(ObjectAttributeMemory);
+
+    //        oamItem.y = reader.ReadByte();
+    //        oamItem.id = reader.ReadByte();
+    //        oamItem.attribute = reader.ReadByte();
+    //        oamItem.x = reader.ReadByte();
+
+    //        return oamItem;
+    //    }
+    //}
+
+
     // The Picture Processing Unit of the Nintendo - this will be the 2C02
     public class PPU
     {
@@ -116,6 +152,25 @@ namespace NES
         private Status status;
         private Mask mask;
         private PPUCTRL control;
+
+        // Sprites - OAM
+        public byte[] OAM = new byte[256];  // I'm going to just do a big byte array and work out when I need specific bytes for a sprite
+        public byte oam_addr = 0x00;
+
+
+        //// binary reader and writer to persist for reading and writing to OAM
+        //static MemoryStream memStream = new MemoryStream();
+        //BinaryWriter binWriter = new BinaryWriter(memStream);
+
+        //static MemoryStream byteMemStream = new MemoryStream();
+        //BinaryReader binReader = new BinaryReader(byteMemStream);
+
+        // for sprite drawing
+        private byte[] spriteScanline = new byte[8 * 4]; // as in 8 4-byte sprites
+        int spriteCount;
+        byte[] sprite_shifter_pattern_lo = new byte[8];
+        byte[] sprite_shifter_pattern_hi = new byte[8];
+
 
         // For scrolling
         private loopy_register vram_addr;
@@ -213,7 +268,7 @@ namespace NES
 
                         for (int col = 0; col < 8; col++)
                         {
-                            byte px = (byte)((tile_lsb & 0x01) + (tile_msb & 0x01));
+                            byte px = (byte)(((tile_lsb & 0x01) << 1) | (tile_msb & 0x01));
                             tile_lsb >>= 1;
                             tile_msb >>= 1;
 
@@ -327,8 +382,10 @@ namespace NES
                         data = status.reg;
                         break;
                     case 0x0003:        // OAM Address
+                        data = oam_addr;
                         break;
                     case 0x0004:        // OAM Data
+                        data = OAM[oam_addr];
                         break;
                     case 0x0005:        // Scroll
                         break;
@@ -344,8 +401,10 @@ namespace NES
                 switch (addr)
                 {
                     case 0x0000:        // Control
+                        data = control.reg;
                         break;
                     case 0x0001:        // Mask
+                        data = mask.reg;
                         break;
                     case 0x0002:        // Status
                         //status.vertical_blank = 1;
@@ -355,8 +414,10 @@ namespace NES
                         address_latch = 0;
                         break;
                     case 0x0003:        // OAM Address
+                        data = oam_addr;
                         break;
                     case 0x0004:        // OAM Data
+                        data = OAM[oam_addr];
                         break;
                     case 0x0005:        // Scroll
                         break;
@@ -394,8 +455,10 @@ namespace NES
                 case 0x0002:        // Status
                     break;
                 case 0x0003:        // OAM Address
+                    oam_addr = data;
                     break;
                 case 0x0004:        // OAM Data
+                    OAM[oam_addr] = data;
                     break;
                 case 0x0005:        // Scroll
                     if (address_latch == 0)
@@ -651,6 +714,23 @@ namespace NES
                 bg_shifter_attrib_lo <<= 1;
                 bg_shifter_attrib_hi <<= 1;
             }
+
+            if (mask.render_sprites > 0 && cycle >= 1 && cycle < 258)
+            {
+                for (int i = 0; i < spriteCount; i++)
+                {
+                    if (spriteScanline[i * 4 + 3] > 0)
+                    {
+                        spriteScanline[i * 4 + 3]--;
+                    }
+                    else
+                    {
+                        sprite_shifter_pattern_lo[i] <<= 1;
+                        sprite_shifter_pattern_hi[i] <<= 1;
+                    }
+                }
+
+            }
         }
 
         public void Clock()
@@ -660,6 +740,14 @@ namespace NES
                 if (scanline == -1 && cycle == 1)
                 {
                     status.vertical_blank = 0;
+
+                    status.sprite_overflow = 0;
+
+                    for (int i = 0; i < 8; i++)
+                    {
+                        sprite_shifter_pattern_lo[i] = 0;
+                        sprite_shifter_pattern_hi[i] = 0;
+                    }
                 }
 
                 if ((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338))
@@ -716,6 +804,121 @@ namespace NES
                 {
                     TransferAddressY();
                 }
+
+
+                // Foreground rendering - not how the NES does it
+                if (cycle == 257 && scanline >= 0)
+                {
+                    for (int i = 0; i < 8; i++)
+                    {
+                        spriteScanline[i * 4] = 0xFF;
+                        spriteCount = 0;
+
+                        byte OAMEntry = 0; // represents all 4 bytes
+                        while (OAMEntry < 64 && spriteCount < 9)
+                        {
+                            int diff = (int)scanline - (int)OAM[OAMEntry * 4];
+                            if (diff >= 0 && diff < (control.sprite_size > 0 ? 16 : 8))
+                            {
+                                if (spriteCount < 8)
+                                {
+                                    for (int j = 0; j < 4; j++)
+                                    {
+                                        spriteScanline[spriteCount + j] = OAM[OAMEntry * 4 + j];
+                                    }
+                                    spriteCount++;
+                                }
+                            }
+                            OAMEntry++;
+
+                        }
+                        status.sprite_overflow = (byte)(spriteCount > 8 ? 1 : 0);
+                    }
+                }
+
+                if (cycle == 340)
+                {
+                    for (int i = 0; i < spriteCount; i++)
+                    {
+                        byte sprite_pattern_bits_lo, sprite_pattern_bits_hi;
+                        ushort sprite_pattern_addr_lo, sprite_pattern_addr_hi;
+
+                        if (control.sprite_size == 0)
+                        {
+                            // 8x8 mode
+                            if ((byte)(spriteScanline[i*4+2] & 0x80) == 0)
+                            {
+                                // normal, not vert flipped
+                                sprite_pattern_addr_lo = (ushort)((ushort)(control.pattern_sprite << 12)
+                                    | (ushort)(spriteScanline[i * 4 + 1] << 4)
+                                    | (ushort)(scanline - spriteScanline[i * 4]));
+                            }
+                            else
+                            {
+                                // vert flipped
+                                sprite_pattern_addr_lo = (ushort)((ushort)(control.pattern_sprite << 12)
+                                    | (ushort)(spriteScanline[i * 4 + 1] << 4)
+                                    | (ushort)(7 - (scanline - spriteScanline[i * 4])));
+                            }
+                        }
+                        else
+                        {
+                            // 8x16
+                            if ((byte)(spriteScanline[i * 4 + 2] & 0x80) == 0)
+                            {
+                                // normal, not vert flipped
+                                if (scanline - spriteScanline[i * 4] < 8)
+                                {
+                                    // read top half 
+                                    sprite_pattern_addr_lo = (ushort)(((spriteScanline[i * 4 + 1] & 0x01) << 12)
+                                        | ((spriteScanline[i * 4 + 1] & 0xFE) << 4)
+                                        | ((scanline - spriteScanline[i * 4] & 0x07)));
+                                }
+                                else
+                                {
+                                    // read bottom half
+                                    sprite_pattern_addr_lo = (ushort)(((spriteScanline[i * 4 + 1] & 0x01) << 12)
+                                        | (((spriteScanline[i * 4 + 1] & 0xFE) + 1) << 4)
+                                        | ((scanline - spriteScanline[i * 4] & 0x07)));
+                                }
+                            }
+                            else 
+                            {
+                                // vert flipped
+                                if (scanline - spriteScanline[i * 4] < 8)
+                                {
+                                    // read top half (flipped)
+                                    sprite_pattern_addr_lo = (ushort)(((spriteScanline[i * 4 + 1] & 0x01) << 12)
+                                        | (((spriteScanline[i * 4 + 1] & 0xFE) + 1) << 4)
+                                        | ((7 - (scanline - spriteScanline[i * 4] & 0x07))));
+                                }
+                                else
+                                {
+                                    // read bottom half (flipped)
+                                    sprite_pattern_addr_lo = (ushort)(((spriteScanline[i * 4 + 1] & 0x01) << 12)
+                                        | ((spriteScanline[i * 4 + 1] & 0xFE) << 4)
+                                        | ((7 - (scanline - spriteScanline[i * 4] & 0x07))));
+                                }
+                            }
+                        }
+
+                        sprite_pattern_addr_hi = (ushort)(sprite_pattern_addr_lo + 8);
+                        sprite_pattern_bits_lo = ppuRead(sprite_pattern_addr_lo);
+                        sprite_pattern_bits_hi = ppuRead(sprite_pattern_addr_hi);
+
+                        if ((byte)(spriteScanline[i * 4 + 2] & 0x40) > 0)
+                        {
+                            sprite_pattern_bits_lo = FlipByte(sprite_pattern_bits_lo);
+                            sprite_pattern_bits_hi = FlipByte(sprite_pattern_bits_hi);
+                        }
+
+                        sprite_shifter_pattern_lo[i] = sprite_pattern_bits_lo;
+                        sprite_shifter_pattern_hi[i] = sprite_pattern_bits_hi;
+                    }
+                }
+                     
+                
+
             }
 
             if (scanline == 240)
@@ -754,7 +957,64 @@ namespace NES
                 bg_palette = (byte)((bg_pal1 << 1) | bg_pal0);
             }
 
-            mainScreen.SetPixel(cycle - 1, scanline, GetColorFromPaletteRam(bg_palette, bg_pixel));
+            byte fg_pixel = 0x00;
+            byte fg_palette = 0x00;
+            byte fg_priority = 0x00;
+
+            if (mask.render_sprites > 0)
+            {
+                for (int i = 0; i < spriteCount; i++)
+                {
+                    if (spriteScanline[i * 4 + 3] == 0)
+                    {
+                        byte fg_pixel_lo = (byte)((sprite_shifter_pattern_lo[i] & 0x80) > 0 ? 1 : 0);
+                        byte fg_pixel_hi = (byte)((sprite_shifter_pattern_hi[i] & 0x80) > 0 ? 1 : 0);
+                        fg_pixel = (byte)((fg_pixel_hi << 1) | fg_pixel_lo);
+
+                        fg_palette = (byte)((spriteScanline[i * 4 + 2] & 0x03) + 0x04);
+                        fg_priority = (byte)((spriteScanline[i * 4 + 2] & 0x20) == 0 ? 1 : 0);
+
+                        if (fg_pixel != 0)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            byte pixel = 0x00;
+            byte palette = 0x00;
+
+            if (bg_pixel == 0 && fg_pixel == 0)
+            {
+                pixel = 0x00;
+                palette = 0x00;
+            }
+            else if (bg_pixel == 0 && fg_pixel > 0)
+            {
+                pixel = fg_pixel;
+                palette = fg_palette;
+            }
+            else if (bg_pixel > 0 && fg_pixel == 0)
+            {
+                pixel = bg_pixel;
+                palette = bg_palette;
+            }
+            else if (bg_pixel > 0 && fg_pixel > 0)
+            {
+                if (fg_priority > 0)
+                {
+                    pixel = fg_pixel;
+                    palette = fg_palette;
+                }
+                else
+                {
+                    pixel = bg_pixel;
+                    palette = bg_palette;
+                }
+            }
+
+            mainScreen.SetPixel(cycle - 1, scanline, GetColorFromPaletteRam(palette, pixel));
 
             cycle++;
 
@@ -769,6 +1029,14 @@ namespace NES
                     FrameComplete = true;
                 }
             }
+        }
+
+        public static byte FlipByte(byte input)
+        {
+            input = (byte)((byte)(input & 0xF0) >> 4 | (byte)(input & 0x0F) << 4);
+            input = (byte)((byte)(input & 0xCC) >> 2 | (byte)(input & 0x33) << 2);
+            input = (byte)((byte)(input & 0xAA) >> 1 | (byte)(input & 0x55) << 1);
+            return input;
         }
     }
 }

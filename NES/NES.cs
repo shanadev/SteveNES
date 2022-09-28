@@ -152,8 +152,8 @@ namespace NES
             SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS_CAP;
 
             // Load that cartridge
-            cartridge = new Cartridge("nestest.nes");
-            //cartridge = new Cartridge("smb.nes");
+            //cartridge = new Cartridge("nestest.nes");
+            cartridge = new Cartridge("smb.nes");
             //cartridge = new Cartridge("Donkey Kong.nes");
             //cartridge = new Cartridge("1942 (Japan, USA).nes");
             //cartridge = new Cartridge("Kung Fu (Japan, USA).nes");
@@ -297,15 +297,22 @@ namespace NES
                         
             //DrawRam(2, 260, 0x0000, 16, 16);
             //DrawRam(2, 182, 0x8000, 16, 16);
-            DrawCPU(margin, 2);         // Draw CPU information
-            DrawCode(margin, 80, 25);       // Draw the disassembled code
-            DrawRam(2, 365, 0x0000, 16, 16);    // Draw the zero page of RAM
+            DrawCPU(margin, 150);         // Draw CPU information
+            //DrawCode(margin, 80, 25);       // Draw the disassembled code
 
-            DrawController(610, 12);    // Draw the controller info
+            //engine.PixelDimensionTest(1);
+            DrawOAM(margin, 230, 24);    /// draw top OAM entries
+            //engine.PixelDimensionTest(2);
+            //DrawRam(2, 365, 0x0000, 16, 16);    // Draw the zero page of RAM
+
+
+
+            DrawController(610, 150);    // Draw the controller info
 
             // Draw the palettes and pattern tables
-            margin = 450;
-            int downfactor = 40;
+            margin = 390;
+            int starty = 5;
+            //int downfactor = 40;
             const int SwatchSize = 6;
 
             for (int p = 0; p < 8; p++)
@@ -313,15 +320,15 @@ namespace NES
                 for (int s = 0; s < 4; s++)
                 {
                     int factor = p * (SwatchSize * 5) + s * SwatchSize;
-                    engine.DrawQuadFilled(margin + factor, 341 + 40, margin + factor + SwatchSize, 341 + 40 + SwatchSize, nes.ppu.GetColorFromPaletteRam((byte)p, (byte)s));
+                    engine.DrawQuadFilled(margin + factor, starty, margin + factor + SwatchSize, starty + SwatchSize, nes.ppu.GetColorFromPaletteRam((byte)p, (byte)s));
                     // FillRect(265 + p * (SwatchSize * 5) + s * SwatchSize, 340, SwatchSize, SwatchSize, nes.ppu.GetColorFromPaletteRam(p, s));
                 }
             }
 
-            engine.DrawQuad(margin + SelectedPalette * (SwatchSize * 5) - 1, 341 + 40, margin + SelectedPalette * (SwatchSize * 5) + (SwatchSize * 4), 341 + 40 + SwatchSize, c_white);
+            engine.DrawQuad(margin + SelectedPalette * (SwatchSize * 5) - 1, starty, margin + SelectedPalette * (SwatchSize * 5) + (SwatchSize * 4), starty + SwatchSize, c_white);
 
-            engine.DrawSprite(nes.ppu.GetPatternTable(0, SelectedPalette), margin, 350 + 40, Flip.NONE);
-            engine.DrawSprite(nes.ppu.GetPatternTable(1, SelectedPalette), margin + 132, 350 + 40, Flip.NONE);
+            engine.DrawSprite(nes.ppu.GetPatternTable(0, SelectedPalette), margin, starty + 9, Flip.NONE);
+            engine.DrawSprite(nes.ppu.GetPatternTable(1, SelectedPalette), margin + 132, starty + 9, Flip.NONE);
 
 
 
@@ -384,6 +391,20 @@ namespace NES
                 engine.DrawText(cX, cY, offset, c_white);
                 cY += 10;
             }
+        }
+
+        public void DrawOAM(int x, int y, int showCount)
+        {
+            for (int i = 0; i < showCount; i++)
+            {
+                string output = Hex((uint)i, 2) +
+                    ": (" + Convert.ToString(nes.ppu.OAM[i * 4 + 3], toBase: 10) +
+                    ", " + Convert.ToString(nes.ppu.OAM[i * 4 + 0], toBase: 10) + ") " +
+                    "ID: " + Hex(nes.ppu.OAM[i * 4 + 1], 2) +
+                    " AT: " + Hex(nes.ppu.OAM[i * 4 + 2], 2);
+                engine.DrawText(x, y + (i * 10), output, c_white);
+            }
+
         }
 
         // Drawing CPU information

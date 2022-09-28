@@ -27,6 +27,14 @@ namespace NES
         private uint systemClockCounter = 0; // Master counter
         // TODO: make public accessible
 
+        // Handling DMA
+        byte dma_page = 0x00;   // page we're accessing, top byte
+        byte dma_addr = 0x00;   // byte within the page, bottom byte
+        byte dma_data = 0x00;   // the actual data being transferred
+
+        bool dma_transfer = false; // is it happening?
+        bool dma_wait = true;  // are we waiting to start DMA?
+
         // Constructor - engine comes in, set up Ram, CPU and PPU
         public Bus()
         {
@@ -52,6 +60,12 @@ namespace NES
             else if (addr >= 0x2000 && addr <= 0x3FFF)  // THis is a write to the PPU
             {
                 ppu.cpuWrite((ushort)(addr & 0x0007), data);
+            }
+            else if (addr == 0x4014)
+            {
+                dma_page = data;
+                dma_addr = 0x00;
+                dma_transfer = true;
             }
             else if (addr >= 0x4016 && addr <= 0x4017)  // Write to the controller addresses - sets the state
             {
@@ -137,7 +151,38 @@ namespace NES
 
             if (systemClockCounter % 3 == 0)
             {
-                cpu.Clock();
+                if (dma_transfer)
+                {
+                    if (dma_wait)
+                    {
+                        if (systemClockCounter % 2 == 1)
+                        {
+                            dma_wait = false;
+                        }
+                    }
+                    else
+                    {
+                        if (systemClockCounter % 2 == 0)
+                        {
+                            dma_data = cpuRead(dma_page << 8 | dma_addr);
+                        }
+                        else
+                        {
+                            ppu.OAM[dma_addr] = dma_data;
+                            dma_addr++;
+
+                            if (dma_addr == 0x00)
+                            {
+                                dma_transfer = false;
+                                dma_wait = true;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    cpu.Clock();
+                }
             }
 
             // Non-maskable interrupt - could happen any clock cycle and can't be stopped
