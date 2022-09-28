@@ -10,9 +10,17 @@ What I'd like to implement
 * USB Controller
 * Illegal Op Codes
 * Reasonable mappers, I want to emulate my favorite games
-  * Mario 2 & 3
-  * Castlevania 3
-  * Mega Man 2 & 3
+  * Mario 2 & 3 (Mapper 4)
+  * Castlevania 1-3 (Mapper 2, 1, 5)
+  * Mega Man 2 & 3 (Mapper 1, 4)
+  * Metalstorm (mapper 4)
+  * Duck Tails (mapper 2)
+  * Final Fantasy (Mapper 1)
+  * Guardian Legend (mapper 2)
+  * Metroid (mapper 1)
+  * Zelda 1 and 2 (mapper 1)
+  * Ninja Gaiden 1-3 (mappers 1 and 4)
+  * Star Tropics (mapper 4)
 
 I'm on a Mac using Visual Studio 2022 - I'm using **C# dotnet 6**. For graphics, I'm using the SDL library with the C# bindings provided.
 
@@ -26,3 +34,9 @@ The NES is comprised of
 * Mappers
 * Cart
 
+**Update**
+* CPU Done and tested (legal codes only)
+* PPU Done
+* Mapper 000 games are now playable, sprites and sprite zero detection added
+
+Need to look at speed, but speed is really good when running in release mode, totally playable at 60FPS.
