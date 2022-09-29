@@ -11,14 +11,14 @@ What I'd like to implement
 * Illegal Op Codes
 * Reasonable mappers, I want to emulate my favorite games
   * Mario 2 & 3 (Mapper 4)
-  * Castlevania 1-3 (Mapper 2, 1, 5)
-  * Mega Man 2 & 3 (Mapper 1, 4)
+  * Castlevania 1-3 (Mapper 2, 1, 5) 1 & 2 done!
+  * Mega Man 2 & 3 (Mapper 1, 4) 2 done!
   * Metalstorm (mapper 4)
   * ~~Duck Tails (mapper 2)~~
-  * Final Fantasy (Mapper 1)
+  * ~~Final Fantasy (Mapper 1)~~
   * ~~Guardian Legend (mapper 2)~~
-  * Metroid (mapper 1)
-  * Zelda 1 and 2 (mapper 1)
+  * ~~Metroid (mapper 1)~~
+  * ~~Zelda 1 and 2 (mapper 1)~~
   * Ninja Gaiden 1-3 (mappers 1 and 4)
   * Star Tropics (mapper 4)
 
@@ -42,6 +42,9 @@ The NES is comprised of
 * Mapper 002 and 003 added!
     * Tested 002 with: Castlevania 1, DuckTales, Guardian Legend
     * Tested 003 with: Gradius, Mickey Mousecapade
+* Mapper 001 added
+    * Tested Legend of Zelda, Tetris, Zelda II, Castlevania II, Mega Man 2, Final Fantasy, Metroid, Ninja Gaiden, Adventures in the Magic Kingdom, Chip 'n Dale Rescue Rangers, Monster Party
+    * All games have palette issues, zelda freezes, many of these unplayable right now
 
 
 Need to look at speed, but speed is really good when running in release mode, totally playable at 60FPS.
