@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Drawing;
+using System.Threading;
 using DisplayEngine;
 //using Serilog;
 
@@ -161,9 +163,18 @@ namespace NES
             //cartridge = new Cartridge("Kung Fu (Japan, USA).nes");
             //cartridge = new Cartridge("Excitebike (Japan, USA).nes");
 
-            // MAPPER 001
+            // MAPPER 001 - BUGGIES
             //cartridge = new Cartridge("Legend of Zelda, The (USA) (Rev A).nes");            
             //cartridge = new Cartridge("Tetris (USA).nes");
+            //cartridge = new Cartridge("Zelda II - The Adventure of Link (USA).nes");
+            //cartridge = new Cartridge("Castlevania II - Simon's Quest (USA).nes");
+            //cartridge = new Cartridge("Mega Man 2 (USA).nes");
+            //cartridge = new Cartridge("Final Fantasy (USA).nes");
+            //cartridge = new Cartridge("Metroid (USA).nes");
+            //cartridge = new Cartridge("Ninja Gaiden (USA).nes");
+            //cartridge = new Cartridge("Adventures in the Magic Kingdom (USA).nes");
+            //cartridge = new Cartridge("Chip 'n Dale Rescue Rangers (USA).nes");
+            //cartridge = new Cartridge("Monster Party (USA).nes");
 
             // MAPPER 002
             //cartridge = new Cartridge("DuckTales (USA).nes");
@@ -176,7 +187,7 @@ namespace NES
             nes.InsertCartridge(cartridge);
 
             // DISASSEMBLE - and a way to log it
-            asm = nes.cpu.Disassemble(0x0000, 0xFFFF);
+            //asm = nes.cpu.Disassemble(0x0000, 0xFFFF);
             //var asString = string.Join(Environment.NewLine, asm);
             //Log.Debug($"{asString}");
 

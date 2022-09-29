@@ -126,17 +126,11 @@ namespace NES
                 // mapper type (Mapper is an Abstract class)
                 switch (mapperID)
                 {
-                    case 0:
-                        mapper = new Mapper_000(PRGbanks, CHRbanks);
-                        break;
-                    case 2:
-                        mapper = new Mapper_002(PRGbanks, CHRbanks);
-                        break;
-                    case 3:
-                        mapper = new Mapper_003(PRGbanks, CHRbanks);
-                        break;
-                    default:
-                        break;
+                    case 0: mapper = new Mapper_000(PRGbanks, CHRbanks); break;
+                    case 1: mapper = new Mapper_001(PRGbanks, CHRbanks); break;
+                    case 2: mapper = new Mapper_002(PRGbanks, CHRbanks); break;
+                    case 3: mapper = new Mapper_003(PRGbanks, CHRbanks); break;
+                    default: break;
                 }
 
             }
@@ -170,7 +164,7 @@ namespace NES
         public bool cpuRead(int addr, out byte data)
         {
             uint mapped_addr = 0;
-            if (mapper.cpuMapRead((ushort)addr, out mapped_addr))
+            if (mapper.cpuMapRead((ushort)addr, out mapped_addr, out data))
             {
                 if (mapped_addr == 0xFFFFFFFF)
                 {
