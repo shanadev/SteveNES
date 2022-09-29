@@ -153,13 +153,25 @@ namespace NES
             SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS_CAP;
 
             // Load that cartridge
-            //cartridge = new Cartridge("nestest.nes");
-            cartridge = new Cartridge("smb.nes");
+            // MAPPER 000
+            cartridge = new Cartridge("nestest.nes");
+            //cartridge = new Cartridge("smb.nes");
             //cartridge = new Cartridge("Donkey Kong.nes");
             //cartridge = new Cartridge("1942 (Japan, USA).nes");
             //cartridge = new Cartridge("Kung Fu (Japan, USA).nes");
             //cartridge = new Cartridge("Excitebike (Japan, USA).nes");
-            
+
+            // MAPPER 001
+            //cartridge = new Cartridge("Legend of Zelda, The (USA) (Rev A).nes");            
+            //cartridge = new Cartridge("Tetris (USA).nes");
+
+            // MAPPER 002
+            //cartridge = new Cartridge("DuckTales (USA).nes");
+            //cartridge = new Cartridge("Guardian Legend, The (USA).nes");
+            //cartridge = new Cartridge("Castlevania (USA) (Rev A).nes");
+
+            //cartridge = new Cartridge("Mickey Mousecapade (USA).nes");
+            //cartridge = new Cartridge("Gradius (USA).nes");
 
             nes.InsertCartridge(cartridge);
 
@@ -314,12 +326,12 @@ namespace NES
             //engine.PixelDimensionTest(2);   // put the scale back
             // TODO: formalize this scaling feature
 
-            //int margin = 390;
+            int margin = 390;
                         
             //DrawRam(2, 260, 0x0000, 16, 16);
             //DrawRam(2, 182, 0x8000, 16, 16);
             //DrawCPU(margin, 150);         // Draw CPU information
-            //DrawCode(margin, 80, 25);       // Draw the disassembled code
+            //DrawCode(margin, 220, 25);       // Draw the disassembled code
 
             //engine.PixelDimensionTest(1);
             //DrawOAM(margin, 230, 24);    /// draw top OAM entries

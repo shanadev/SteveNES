@@ -8,14 +8,7 @@ namespace NES
     // Class representing a cartridge and the data contained. Has passthrough areas for the mappers
     public class Cartridge
     {
-        // enum for the type of mirroring - sometimes hard-wired on the game chip
-        public enum MIRROR
-        {
-            HORIZONTAL,
-            VERTICAL,
-            ONESCREEN_LO,
-            ONESCREEN_HI
-        }
+
 
         // Our Program and Character data
         private List<byte> PRG = new List<byte>();
@@ -37,9 +30,11 @@ namespace NES
         byte tv_system2;
         string unused;
 
+        MIRROR hw_mirror;
+
         // The mapper instance that will be set when we know which mapper is needed
         public Mapper mapper;
-        public MIRROR mirror; // represent the mirror mode
+        //public MIRROR mirror; // represent the mirror mode
 
 
         // Constructor - open the file and read it - we're assumiung iNes format
@@ -60,17 +55,21 @@ namespace NES
                 unused = string.Join(null,binReader.ReadChars(5));
 
                 // Maybe this trainer area
-                if ((byte)(mapper1 & 0x04) > 0)
+                var test = (mapper1 & 0b00000100);
+
+
+                if ((byte)(mapper1 & 0b00000100) > 0)
                 {
                     unused += string.Join(null,binReader.ReadChars(512));
                 }
 
                 // Determine mapper and mirroring
                 mapperID = (byte)((byte)((byte)(mapper2 >> 4) << 4) | (byte)(mapper1 >> 4));
-                mirror = (mapper1 & 0x01) > 0 ? MIRROR.VERTICAL : MIRROR.HORIZONTAL;
+                hw_mirror = (mapper1 & 0x01) > 0 ? MIRROR.VERTICAL : MIRROR.HORIZONTAL;
 
                 // Hard-coding this for now
                 byte fileType = 1;
+                if ((mapper2 & 0x0C) == 0x08) fileType = 2;
 
                 if (fileType == 0)
                 {
@@ -89,7 +88,10 @@ namespace NES
                     byte[] readchrbytes;
                     if (CHRbanks == 0)
                     {
-                        readchrbytes = binReader.ReadBytes(8192);
+                        //readchrbytes = new byte[8192];
+                        readchrbytes = Enumerable.Repeat((byte)0x00, 8192).ToArray();
+
+                        //readchrbytes = binReader.ReadBytes(8192);
                     }
                     else
                     {
@@ -111,7 +113,13 @@ namespace NES
 
                 if (fileType == 2)
                 {
+                    PRGbanks = (byte)(((prg_ram_size & 0x07) << 8) | prg_rom_chunks);
+                    byte[] readBytes = binReader.ReadBytes(PRGbanks * 16384);
+                    PRG.AddRange(readBytes);
 
+                    CHRbanks = (byte)(((prg_ram_size & 0x38) << 8) | chr_rom_chunks);
+                    byte[] readchrBytes = binReader.ReadBytes(CHRbanks * 8192);
+                    CHR.AddRange(readchrBytes);
                 }
 
                 // Based on mapper id, assign a new mapper instance of the correct
@@ -121,6 +129,12 @@ namespace NES
                     case 0:
                         mapper = new Mapper_000(PRGbanks, CHRbanks);
                         break;
+                    case 2:
+                        mapper = new Mapper_002(PRGbanks, CHRbanks);
+                        break;
+                    case 3:
+                        mapper = new Mapper_003(PRGbanks, CHRbanks);
+                        break;
                     default:
                         break;
                 }
@@ -128,6 +142,27 @@ namespace NES
             }
 
         }
+
+        public MIRROR Mirror()
+        {
+            MIRROR m = mapper.mirror();
+            if (m == MIRROR.HARDWARE)
+            {
+                return hw_mirror;
+            }
+            else
+            {
+                return m;
+            }
+        }
+
+        public void Reset()
+        {
+            if (mapper != null)
+                mapper.reset();
+        }
+
+        
 
 
         // Read and Write methods for both the CPU and PPU - all can be overridden by a mapper
@@ -137,7 +172,17 @@ namespace NES
             uint mapped_addr = 0;
             if (mapper.cpuMapRead((ushort)addr, out mapped_addr))
             {
-                data = PRG[(int)mapped_addr];
+                if (mapped_addr == 0xFFFFFFFF)
+                {
+                    data = 0x00;
+                    return true;
+                }
+                else
+                {
+                    data = PRG[(int)mapped_addr];
+                    //Console.WriteLine($"addr {CPU.Hex((int)mapped_addr, 8)} -- data {CPU.Hex((int)data, 2)}");
+
+                }
                 //Log.Debug($"Read from Cart PRG - mapped_addr:0x{Convert.ToString(mapped_addr, toBase: 16).PadLeft(4, '0')} - data:0x{Convert.ToString(data, toBase: 16).PadLeft(2, '0')}");
                 return true;
             }
@@ -148,11 +193,18 @@ namespace NES
         public bool cpuWrite(ushort addr, byte data)
         {
             uint mapped_addr = 0;
-            if (mapper.cpuMapWrite(addr, out mapped_addr))
+            if (mapper.cpuMapWrite(addr, out mapped_addr, data))
             {
-                PRG[(int)mapped_addr] = data;
-                //Log.Debug($"Write to Cart PRG - mapped_addr:0x{Convert.ToString(mapped_addr, toBase: 16).PadLeft(4, '0')} - data:0x{Convert.ToString(data, toBase: 16).PadLeft(2, '0')}");
+                if (mapped_addr == 0xFFFFFFFF)
+                {
+                    return true;
+                }
+                else
+                {
+                    PRG[(int)mapped_addr] = data;
+                    //Log.Debug($"Write to Cart PRG - mapped_addr:0x{Convert.ToString(mapped_addr, toBase: 16).PadLeft(4, '0')} - data:0x{Convert.ToString(data, toBase: 16).PadLeft(2, '0')}");
 
+                }
                 return true;
             }
             else

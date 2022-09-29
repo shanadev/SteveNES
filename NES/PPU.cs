@@ -1,5 +1,6 @@
 ﻿using System;
 using DisplayEngine;
+
 //using Serilog;
 
 namespace NES
@@ -518,7 +519,7 @@ namespace NES
             {
                 addr &= 0x0FFF;
 
-                if (cart.mirror == Cartridge.MIRROR.VERTICAL)
+                if (cart.Mirror() == MIRROR.VERTICAL)
                 {
                     if (addr >= 0x0000 && addr <= 0x03FF)
                         data = nameTable[0, addr & 0x03FF];
@@ -529,7 +530,7 @@ namespace NES
                     if (addr >= 0x0C00 && addr <= 0x0FFF)
                         data = nameTable[1, addr & 0x03FF];
                 }
-                else if (cart.mirror == Cartridge.MIRROR.HORIZONTAL)
+                else if (cart.Mirror() == MIRROR.HORIZONTAL)
                 {
                     if (addr >= 0x0000 && addr <= 0x03FF)
                         data = nameTable[0, addr & 0x03FF];
@@ -570,7 +571,7 @@ namespace NES
             else if (addr >= 0x2000 && addr <= 0x3EFF)
             {
                 addr &= 0x0FFF;
-                if (cart.mirror == Cartridge.MIRROR.VERTICAL)
+                if (cart.Mirror() == MIRROR.VERTICAL)
                 {
                     if (addr >= 0x0000 && addr <= 0x03FF)
                         nameTable[0, addr & 0x03FF] = data;
@@ -581,7 +582,7 @@ namespace NES
                     if (addr >= 0x0C00 && addr <= 0x0FFF)
                         nameTable[1, addr & 0x03FF] = data;
                 }
-                else if (cart.mirror == Cartridge.MIRROR.HORIZONTAL)
+                else if (cart.Mirror() == MIRROR.HORIZONTAL)
                 {
                     if (addr >= 0x0000 && addr <= 0x03FF)
                         nameTable[0, addr & 0x03FF] = data;
@@ -943,7 +944,7 @@ namespace NES
             }
 
             //if (!mainScreen.SetPixel(cycle - 1, scanline, nesPalette[rnd.Next(64)]))
-            //{
+             //{
             //    //Console.WriteLine($"SetPixel error on NES main screen - cycle {cycle}");
             //}
             //engine.DrawPixel(cycle - 1, scanline, nesPalette[rnd.Next(64)]);

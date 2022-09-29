@@ -14,9 +14,9 @@ What I'd like to implement
   * Castlevania 1-3 (Mapper 2, 1, 5)
   * Mega Man 2 & 3 (Mapper 1, 4)
   * Metalstorm (mapper 4)
-  * Duck Tails (mapper 2)
+  * ~~Duck Tails (mapper 2)~~
   * Final Fantasy (Mapper 1)
-  * Guardian Legend (mapper 2)
+  * ~~Guardian Legend (mapper 2)~~
   * Metroid (mapper 1)
   * Zelda 1 and 2 (mapper 1)
   * Ninja Gaiden 1-3 (mappers 1 and 4)
@@ -38,5 +38,12 @@ The NES is comprised of
 * CPU Done and tested (legal codes only)
 * PPU Done
 * Mapper 000 games are now playable, sprites and sprite zero detection added
+    * Tested with: Super Mario Bros, Donkey Kong, 1942, Excitebike, Kung Fu 
+* Mapper 002 and 003 added!
+    * Tested 002 with: Castlevania 1, DuckTales, Guardian Legend
+    * Tested 003 with: Gradius, Mickey Mousecapade
+
 
 Need to look at speed, but speed is really good when running in release mode, totally playable at 60FPS.
+
+Noticing edge of screen artifacts that probably should not be there.
