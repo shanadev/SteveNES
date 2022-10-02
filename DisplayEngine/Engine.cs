@@ -6,6 +6,21 @@ namespace DisplayEngine;
 // Primary task is to provide a window with requested width height and pixel size
 // along with override method for drawing a frame
 
+public class ControllerEventArgs : EventArgs
+{
+    public ControllerButton Button { get; set; }
+
+    public ControllerEventArgs()
+    {
+    }
+
+}
+
+public enum ControllerButton
+{
+    A = 0, B = 2, Start = 6, Select = 4, Up = 11, Down = 12, Left = 13, Right = 14
+}
+
 
 public class Engine
 {
@@ -13,12 +28,16 @@ public class Engine
     private IntPtr renderer = IntPtr.Zero;
     private bool quitFlag = false;
     private WindowSize windowSize;
+
+    public IntPtr gameController = IntPtr.Zero;
    
 
     public delegate void RenderFrameDelegate();
 
     public event EventHandler<KeyEventArgs> KeyDown;
     public event EventHandler<KeyEventArgs> KeyUp;
+    public event EventHandler<ControllerEventArgs> ButtonDown;
+    public event EventHandler<ControllerEventArgs> ButtonUp;
 
     public ulong GetElapsedTime()
     {
@@ -34,6 +53,18 @@ public class Engine
     protected virtual void OnKeyUp(KeyEventArgs e)
     {
         EventHandler<KeyEventArgs> handler = KeyUp;
+        handler?.Invoke(this, e);
+    }
+
+    protected virtual void OnControllerKey(ControllerEventArgs e)
+    {
+        EventHandler<ControllerEventArgs> handler = ButtonDown;
+        handler?.Invoke(this, e);
+    }
+
+    protected virtual void OnControllerKeyUp(ControllerEventArgs e)
+    {
+        EventHandler<ControllerEventArgs> handler = ButtonUp;
         handler?.Invoke(this, e);
     }
 
@@ -104,7 +135,7 @@ public class Engine
         // Initialize SDL, the window and the renderer
         try
         {
-            if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) != 0) throw new ApplicationException(SDL.SDL_GetError());
+            if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_GAMECONTROLLER | SDL.SDL_INIT_JOYSTICK) != 0) throw new ApplicationException(SDL.SDL_GetError());
 
             window = SDL.SDL_CreateWindow(winTitle,
                 SDL.SDL_WINDOWPOS_CENTERED,
@@ -122,6 +153,18 @@ public class Engine
                 SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
 
             if (renderer == IntPtr.Zero) throw new ApplicationException(SDL.SDL_GetError());
+
+            var numSticks = SDL.SDL_NumJoysticks();
+            if (numSticks < 1)
+            {
+                Console.WriteLine("No joysticks connected");
+            }
+            else
+            {
+                //Console.WriteLine($"{SDL.SDL_IsGameController(0)}");
+                gameController = SDL.SDL_GameControllerOpen(0);
+                if (gameController == null) throw new ApplicationException(SDL.SDL_GetError());
+            }
         }
         catch (ApplicationException ex)
         {
@@ -142,6 +185,8 @@ public class Engine
         }
 
     }
+
+
 
 
     public void Run(RenderFrameDelegate renderFrame)
@@ -165,10 +210,44 @@ public class Engine
                         //KeyUp.Invoke(this, new KeyEventArgs() { KeyCode = e.key.keysym.sym.ToString() });
                         OnKeyUp(new KeyEventArgs() { KeyCode = e.key.keysym.sym.ToString() });
                         break;
+                    //case SDL.SDL_EventType.SDL_JOYBUTTONDOWN:
+                    //    Console.WriteLine($"SDL_JOYBUTTONDOWN");
+                    //    break;
+                    //case SDL.SDL_EventType.SDL_JOYBUTTONUP:
+                    //    Console.WriteLine($"SDL_JOYBUTTONUP");
+                    //    break;
+                    //case SDL.SDL_EventType.SDL_JOYAXISMOTION:
+                    //    Console.WriteLine($"SDL_JOYAXISMOTION");
+                    //    break;
+                    //case SDL.SDL_EventType.SDL_CONTROLLERAXISMOTION:
+                    //    Console.WriteLine($"SDL_CONTROLLERAXISMOTION");
+                    //    break;
+                    case SDL.SDL_EventType.SDL_CONTROLLERBUTTONDOWN:
+                        OnControllerKey(new ControllerEventArgs() { Button = (ControllerButton)e.cbutton.button });
+                        //Console.WriteLine($"Button: {((sbyte)e.cbutton.button)}");
+                        break;
+                    case SDL.SDL_EventType.SDL_CONTROLLERBUTTONUP:
+                        OnControllerKeyUp(new ControllerEventArgs() { Button = (ControllerButton)e.cbutton.button });
+                        //onsole.WriteLine($"SDL_CONTROLLERBUTTONUP");
+                        break;
+                    default: break;
                 }
             }
 
             SDL.SDL_RenderSetScale(renderer, windowSize.PixelSize, windowSize.PixelSize);
+
+            //if (SDL.SDL_GameControllerGetButton(gameController, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN) > 0)
+            //{
+            //    Console.WriteLine("button down over zero");
+            //}
+            //if (SDL.SDL_GameControllerGetButton(gameController, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP) > 0)
+            //{
+            //    Console.WriteLine("button up over zero");
+            //}
+            //if (SDL.SDL_GameControllerGetButton(gameController, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A) > 0)
+            //{
+            //    Console.WriteLine("button A over zero");
+            //}
 
             renderFrame();
             SDL.SDL_RenderSetScale(renderer, windowSize.PixelSize, windowSize.PixelSize);

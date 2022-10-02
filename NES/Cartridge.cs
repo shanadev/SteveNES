@@ -52,7 +52,7 @@ namespace NES
                 prg_ram_size = binReader.ReadByte();
                 tv_system1 = binReader.ReadByte();
                 tv_system2 = binReader.ReadByte();
-                unused = string.Join(null,binReader.ReadChars(5));
+                unused = string.Join(null, binReader.ReadChars(5));
 
                 // Maybe this trainer area
                 var test = (mapper1 & 0b00000100);
@@ -60,13 +60,20 @@ namespace NES
 
                 if ((byte)(mapper1 & 0b00000100) > 0)
                 {
-                    unused += string.Join(null,binReader.ReadChars(512));
+                    unused += string.Join(null, binReader.ReadChars(512));
                 }
 
                 // Determine mapper and mirroring
-                mapperID = (byte)((byte)((byte)(mapper2 >> 4) << 4) | (byte)(mapper1 >> 4));
-                hw_mirror = (mapper1 & 0x01) > 0 ? MIRROR.VERTICAL : MIRROR.HORIZONTAL;
-
+                mapperID = (byte)(((mapper2 >> 4) << 4) | (mapper1 >> 4));
+                //mapperID = (byte)((byte)((byte)(mapper2 >> 4) << 4) | (byte)(mapper1 >> 4));
+                if ((mapper1 & 0x80) > 0)
+                {
+                    hw_mirror = MIRROR.FOURSCREEN;
+                }
+                else
+                { 
+                    hw_mirror = (mapper1 & 0x01) > 0 ? MIRROR.VERTICAL : MIRROR.HORIZONTAL;
+                }
                 // Hard-coding this for now
                 byte fileType = 1;
                 if ((mapper2 & 0x0C) == 0x08) fileType = 2;
@@ -130,6 +137,7 @@ namespace NES
                     case 1: mapper = new Mapper_001(PRGbanks, CHRbanks); break;
                     case 2: mapper = new Mapper_002(PRGbanks, CHRbanks); break;
                     case 3: mapper = new Mapper_003(PRGbanks, CHRbanks); break;
+                    case 4: mapper = new Mapper_004(PRGbanks, CHRbanks); break;
                     default: break;
                 }
 

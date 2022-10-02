@@ -28,7 +28,7 @@ namespace DisplayEngine
             _windowSettings.Add(WindowSettingTypes.QuadHD, new WindowSize(width: 2560, height: 1440, pixelSize: 1));
             _windowSettings.Add(WindowSettingTypes.UHD, new WindowSize(width: 3840, height: 2160, pixelSize: 1));
             _windowSettings.Add(WindowSettingTypes.FullUHD, new WindowSize(width: 7680, height: 4320, pixelSize: 1));
-            _windowSettings.Add(WindowSettingTypes.CPUView, new WindowSize(width: 1430, height: 1060, pixelSize: 2));
+            _windowSettings.Add(WindowSettingTypes.CPUView, new WindowSize(width: 1400, height: 900, pixelSize: 1));
         }
     }
 }

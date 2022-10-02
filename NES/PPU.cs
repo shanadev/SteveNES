@@ -1,7 +1,7 @@
 ﻿using System;
 using DisplayEngine;
 
-//using Serilog;
+using Serilog;
 
 namespace NES
 {
@@ -195,7 +195,7 @@ namespace NES
 
         private Cartridge cart;
         private Bus bus;
-        public byte[,] nameTable = new byte[2, 1024];   // The main name table
+        public byte[,] nameTable = new byte[4, 1024];   // The main name table
         public byte[,] patternTable = new byte[2, 4096];    // The main pattern table
 
         public ScreenColor[] nesPalette = new ScreenColor[64];  // our NES color palette
@@ -218,6 +218,8 @@ namespace NES
         //private ushort ppu_address = 0x0000;  // oversimplification
 
         //private Engine engine; // the game engine
+
+        private bool odd_frame = false;
 
         public Sprite GetScreen()
         {
@@ -287,10 +289,10 @@ namespace NES
         public ScreenColor GetColorFromPaletteRam(byte palette, byte pixel)
         {
 
-            int index = ppuRead((ushort)(0x3F00 + (palette << 2) + pixel));
+            //int index = ppuRead((ushort)(0x3F00 + (palette << 2) + pixel));
             //if (index > 64) return new ScreenColor(0, 0, 0, 255);
             //Log.Debug($"Get Color: palette:{Convert.ToString(palette, toBase:16).PadLeft(2,'0')} - pixel:{Convert.ToString(pixel, toBase: 16).PadLeft(2, '0')}, ColorIndex:{Convert.ToString(index, toBase: 16).PadLeft(2, '0')}");
-            return nesPalette[index];
+            return nesPalette[ppuRead((ushort)(0x3F00 + (palette << 2) + pixel))];
         }
 
 
@@ -404,10 +406,10 @@ namespace NES
                 switch (addr)
                 {
                     case 0x0000:        // Control
-                        data = control.reg;
+                        //data = control.reg;
                         break;
                     case 0x0001:        // Mask
-                        data = mask.reg;
+                        //data = mask.reg;
                         break;
                     case 0x0002:        // Status
                         //status.vertical_blank = 1;
@@ -417,7 +419,7 @@ namespace NES
                         address_latch = 0;
                         break;
                     case 0x0003:        // OAM Address
-                        data = oam_addr;
+                        //data = oam_addr;
                         break;
                     case 0x0004:        // OAM Data
                         data = OAM[oam_addr];
@@ -541,6 +543,39 @@ namespace NES
                     if (addr >= 0x0C00 && addr <= 0x0FFF)
                         data = nameTable[1, addr & 0x03FF];
                 }
+                else if (cart.Mirror() == MIRROR.ONESCREEN_LO)
+                {
+                    if (addr >= 0x0000 && addr <= 0x03FF)
+                        data = nameTable[0, addr & 0x03FF];
+                    if (addr >= 0x0400 && addr <= 0x07FF)
+                        data = nameTable[0, addr & 0x03FF];
+                    if (addr >= 0x0800 && addr <= 0x0BFF)
+                        data = nameTable[0, addr & 0x03FF];
+                    if (addr >= 0x0C00 && addr <= 0x0FFF)
+                        data = nameTable[0, addr & 0x03FF];
+                }
+                else if (cart.Mirror() == MIRROR.ONESCREEN_HI)
+                {
+                    if (addr >= 0x0000 && addr <= 0x03FF)
+                        data = nameTable[1, addr & 0x03FF];
+                    if (addr >= 0x0400 && addr <= 0x07FF)
+                        data = nameTable[1, addr & 0x03FF];
+                    if (addr >= 0x0800 && addr <= 0x0BFF)
+                        data = nameTable[1, addr & 0x03FF];
+                    if (addr >= 0x0C00 && addr <= 0x0FFF)
+                        data = nameTable[1, addr & 0x03FF];
+                }
+                else if (cart.Mirror() == MIRROR.FOURSCREEN)
+                {
+                    if (addr >= 0x0000 && addr <= 0x03FF)
+                        data = nameTable[0, addr & 0x03FF];
+                    if (addr >= 0x0400 && addr <= 0x07FF)
+                        data = nameTable[1, addr & 0x03FF];
+                    if (addr >= 0x0800 && addr <= 0x0BFF)
+                        data = nameTable[2, addr & 0x03FF];
+                    if (addr >= 0x0C00 && addr <= 0x0FFF)
+                        data = nameTable[3, addr & 0x03FF];
+                }
             }
             else if (addr >= 0x3F00 && addr <= 0x3FFF)
             {
@@ -549,7 +584,7 @@ namespace NES
                 if (addr == 0x0014) addr = 0x0004;
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
-                data = PaletteTable[addr];
+                data = (byte)(PaletteTable[addr] & (mask.grayscale > 0 ? 0x30 : 0x3F));
             }
             return data;
         }
@@ -593,6 +628,40 @@ namespace NES
                     if (addr >= 0x0C00 && addr <= 0x0FFF)
                         nameTable[1, addr & 0x03FF] = data;
                 }
+                else if (cart.Mirror() == MIRROR.ONESCREEN_LO)
+                {
+                    if (addr >= 0x0000 && addr <= 0x03FF)
+                        nameTable[0, addr & 0x03FF] = data;
+                    if (addr >= 0x0400 && addr <= 0x07FF)
+                        nameTable[0, addr & 0x03FF] = data;
+                    if (addr >= 0x0800 && addr <= 0x0BFF)
+                        nameTable[0, addr & 0x03FF] = data;
+                    if (addr >= 0x0C00 && addr <= 0x0FFF)
+                        nameTable[0, addr & 0x03FF] = data;
+                }
+                else if (cart.Mirror() == MIRROR.ONESCREEN_HI)
+                {
+                    if (addr >= 0x0000 && addr <= 0x03FF)
+                        nameTable[1, addr & 0x03FF] = data;
+                    if (addr >= 0x0400 && addr <= 0x07FF)
+                        nameTable[1, addr & 0x03FF] = data;
+                    if (addr >= 0x0800 && addr <= 0x0BFF)
+                        nameTable[1, addr & 0x03FF] = data;
+                    if (addr >= 0x0C00 && addr <= 0x0FFF)
+                        nameTable[1, addr & 0x03FF] = data;
+                }
+                else if (cart.Mirror() == MIRROR.FOURSCREEN)
+                {
+                    if (addr >= 0x0000 && addr <= 0x03FF)
+                        nameTable[0, addr & 0x03FF] = data;
+                    if (addr >= 0x0400 && addr <= 0x07FF)
+                        nameTable[1, addr & 0x03FF] = data;
+                    if (addr >= 0x0800 && addr <= 0x0BFF)
+                        nameTable[2, addr & 0x03FF] = data;
+                    if (addr >= 0x0C00 && addr <= 0x0FFF)
+                        nameTable[3, addr & 0x03FF] = data;
+                }
+
             }
             else if (addr >= 0x3F00 && addr <= 0x3FFF)
             {
@@ -665,7 +734,7 @@ namespace NES
                     if (vram_addr.coarse_y == 29)
                     {
                         vram_addr.coarse_y = 0;
-                        vram_addr.nametable_y = (ushort)(~vram_addr.nametable_y);
+                        vram_addr.nametable_y = (ushort)(~vram_addr.nametable_y & 0x0001);
                     }
                     else if (vram_addr.coarse_y == 31)
                     {
@@ -740,8 +809,14 @@ namespace NES
         {
             if (scanline >= -1 && scanline < 240)
             {
+                if (scanline == 0 && cycle == 0 && odd_frame && (mask.render_background > 0 || mask.render_sprites > 0))
+                {
+                    cycle = 1;
+                }
+
                 if (scanline == -1 && cycle == 1)
                 {
+                    Log.Debug("Vertical Blank Reached");
                     status.vertical_blank = 0;
                     status.sprite_zero_hit = 0;
                     status.sprite_overflow = 0;
@@ -812,17 +887,28 @@ namespace NES
                 // Foreground rendering - not how the NES does it
                 if (cycle == 257 && scanline >= 0)
                 {
-                    for (int i = 0; i < 8; i++)
+                    Array.Fill<byte>(spriteScanline, 0x00);
+                    spriteCount = 0;
+                    for (byte i = 0; i < 8; i++)
                     {
-                        spriteScanline[i * 4] = 0xFF;
-                        spriteCount = 0;
+                        sprite_shifter_pattern_lo[i] = 0;
+                        sprite_shifter_pattern_hi[i] = 0;
+                    }
 
-                        byte OAMEntry = 0; // represents all 4 bytes
-                        spriteZeroHitPossible = false;
+                    byte OAMEntry = 0;
+                    spriteZeroHitPossible = false;
+
+                    //for (int i = 0; i < 8; i++)
+                    //{
+                        //spriteScanline[i * 4] = 0xFF;
+                        //spriteCount = 0;
+
+                        //byte OAMEntry = 0; // represents all 4 bytes
+                        //spriteZeroHitPossible = false;
                         while (OAMEntry < 64 && spriteCount < 9)
                         {
                             int diff = (int)scanline - (int)OAM[OAMEntry * 4];
-                            if (diff >= 0 && diff < (control.sprite_size > 0 ? 16 : 8))
+                            if (diff >= 0 && diff < (control.sprite_size > 0 ? 16 : 8) && spriteCount < 8)
                             {
                                 if (spriteCount < 8)
                                 {
@@ -841,7 +927,7 @@ namespace NES
 
                         }
                         status.sprite_overflow = (byte)(spriteCount > 8 ? 1 : 0);
-                    }
+                   // }
                 }
 
                 if (cycle == 340)
@@ -880,14 +966,14 @@ namespace NES
                                     // read top half 
                                     sprite_pattern_addr_lo = (ushort)(((spriteScanline[i * 4 + 1] & 0x01) << 12)
                                         | ((spriteScanline[i * 4 + 1] & 0xFE) << 4)
-                                        | ((scanline - spriteScanline[i * 4] & 0x07)));
+                                        | ((scanline - spriteScanline[i * 4]) & 0x07));
                                 }
                                 else
                                 {
                                     // read bottom half
                                     sprite_pattern_addr_lo = (ushort)(((spriteScanline[i * 4 + 1] & 0x01) << 12)
                                         | (((spriteScanline[i * 4 + 1] & 0xFE) + 1) << 4)
-                                        | ((scanline - spriteScanline[i * 4] & 0x07)));
+                                        | ((scanline - spriteScanline[i * 4]) & 0x07));
                                 }
                             }
                             else 
@@ -898,14 +984,14 @@ namespace NES
                                     // read top half (flipped)
                                     sprite_pattern_addr_lo = (ushort)(((spriteScanline[i * 4 + 1] & 0x01) << 12)
                                         | (((spriteScanline[i * 4 + 1] & 0xFE) + 1) << 4)
-                                        | ((7 - (scanline - spriteScanline[i * 4] & 0x07))));
+                                        | (7 - (scanline - spriteScanline[i * 4]) & 0x07));
                                 }
                                 else
                                 {
                                     // read bottom half (flipped)
                                     sprite_pattern_addr_lo = (ushort)(((spriteScanline[i * 4 + 1] & 0x01) << 12)
                                         | ((spriteScanline[i * 4 + 1] & 0xFE) << 4)
-                                        | ((7 - (scanline - spriteScanline[i * 4] & 0x07))));
+                                        | (7 - (scanline - spriteScanline[i * 4]) & 0x07));
                                 }
                             }
                         }
@@ -937,6 +1023,7 @@ namespace NES
             if (scanline == 241 && cycle == 1)
             {
                 status.vertical_blank = 1;
+
                 if (control.enable_nmi > 0)
                 {
                     nmi = true;
@@ -971,27 +1058,31 @@ namespace NES
 
             if (mask.render_sprites > 0)
             {
-                spriteZeroBeingRendered = false;
-
-                for (int i = 0; i < spriteCount; i++)
+                if (mask.render_sprites_left > 0 || (cycle >= 9))
                 {
-                    if (spriteScanline[i * 4 + 3] == 0)
+
+                    spriteZeroBeingRendered = false;
+
+                    for (int i = 0; i < spriteCount; i++)
                     {
-                        byte fg_pixel_lo = (byte)((sprite_shifter_pattern_lo[i] & 0x80) > 0 ? 1 : 0);
-                        byte fg_pixel_hi = (byte)((sprite_shifter_pattern_hi[i] & 0x80) > 0 ? 1 : 0);
-                        fg_pixel = (byte)((fg_pixel_hi << 1) | fg_pixel_lo);
-
-                        fg_palette = (byte)((spriteScanline[i * 4 + 2] & 0x03) + 0x04);
-                        fg_priority = (byte)((spriteScanline[i * 4 + 2] & 0x20) == 0 ? 1 : 0);
-
-                        if (fg_pixel != 0)
+                        if (spriteScanline[i * 4 + 3] == 0)
                         {
-                            if (i == 0)
-                            {
-                                spriteZeroBeingRendered = true;
-                            }
+                            byte fg_pixel_lo = (byte)((sprite_shifter_pattern_lo[i] & 0x80) > 0 ? 1 : 0);
+                            byte fg_pixel_hi = (byte)((sprite_shifter_pattern_hi[i] & 0x80) > 0 ? 1 : 0);
+                            fg_pixel = (byte)((fg_pixel_hi << 1) | fg_pixel_lo);
 
-                            break;
+                            fg_palette = (byte)((spriteScanline[i * 4 + 2] & 0x03) + 0x04);
+                            fg_priority = (byte)((spriteScanline[i * 4 + 2] & 0x20) == 0 ? 1 : 0);
+
+                            if (fg_pixel != 0)
+                            {
+                                if (i == 0)
+                                {
+                                    spriteZeroBeingRendered = true;
+                                }
+
+                                break;
+                            }
                         }
                     }
                 }
@@ -1054,6 +1145,15 @@ namespace NES
 
             cycle++;
 
+            if (mask.render_background > 0 || mask.render_sprites > 0)
+            {
+                if (cycle == 260 && scanline < 240)
+                {
+                    cart.mapper.scanline();
+                }
+            }
+
+
             if (cycle >= 341)
             {
                 cycle = 0;
@@ -1063,6 +1163,7 @@ namespace NES
                 {
                     scanline = -1;
                     FrameComplete = true;
+                    odd_frame = !odd_frame;
                 }
             }
         }

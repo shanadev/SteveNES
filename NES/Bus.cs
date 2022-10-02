@@ -9,6 +9,11 @@ namespace NES
     // it has a CPU, PPU, Cart, APU, RAM, etc...
     public class Bus
     {
+        // for disassembling
+        // I need to get refreshed prg info after bank changes - which will be writes to mappers
+        // just refreshig 0x8000 -> 0xFFFF
+        public Dictionary<ushort, string> asmPRG = new Dictionary<ushort, string>();
+
         // devices on the bus
         public CPU cpu;
         public PPU ppu;
@@ -51,7 +56,8 @@ namespace NES
             //Log.Debug($"CPU Write - addr:0x{Convert.ToString(addr, toBase:16).PadLeft(4,'0')} - data:0x{Convert.ToString(data, toBase: 16).PadLeft(2, '0')}");
             if (cart.cpuWrite(addr, data))  // give cart first crack at the write
             {
-
+                // since there was a picked up write, I'm assuming a PRG bank change, so
+                //if (addr >= 0x8000) asmPRG = cpu.Disassemble(0x8000, 0xFFFF);
             }
             else if (addr >= 0x0000 && addr <= 0x1FFF) // write to ram - 2k mirrored to 8k
             {
@@ -136,10 +142,17 @@ namespace NES
 
         // Reset the system
         public void Reset()
-        {            
+        {
+            cart.Reset();
             cpu.Reset();
             ppu.Reset();
             systemClockCounter = 0;
+
+            dma_page = 0x00;
+            dma_addr = 0x00;
+            dma_data = 0x00;
+            dma_wait = true;
+            dma_transfer = false;
         }
 
         // Main NES Clock
@@ -182,6 +195,8 @@ namespace NES
                 else
                 {
                     cpu.Clock();
+                    // if debugging
+                    
                 }
             }
 
@@ -190,6 +205,13 @@ namespace NES
             {
                 ppu.nmi = false;
                 cpu.NMI();
+            }
+
+            // check if cartridge is requesting IRQ
+            if (cart.mapper.irqState())
+            {
+                cart.mapper.irqClear();
+                cpu.IRQ();
             }
 
             systemClockCounter++; // increment the main counter

@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Diagnostics.Metrics;
 using System.Drawing;
+using System.Drawing.Printing;
 using System.Threading;
 using DisplayEngine;
-//using Serilog;
+using Serilog;
 
 namespace NES
 {
@@ -14,6 +16,8 @@ namespace NES
     /// </summary>
     public class NESSystem
     {
+        public bool userQuit = false;
+
         // For random pixels
         //private Random rnd = new Random();
 
@@ -36,7 +40,7 @@ namespace NES
         public float lastTime = 0.0f;
 
         // Disassembled program
-        private Dictionary<ushort, string> asm = new Dictionary<ushort, string>();
+        public Dictionary<ushort, string> asm = new Dictionary<ushort, string>();
 
         // The NES Bus - what really represents the NES + cartridge
         private Bus nes;
@@ -45,6 +49,8 @@ namespace NES
         // Game engine
         public Settings settings = new Settings();
         public Engine engine;
+
+        //public Engine statsWindow;
 
         public byte SelectedPalette = 0x00;
 
@@ -77,25 +83,6 @@ namespace NES
         // Handle key down event from the game engine
         public void KeyDownHandler(object sender, KeyEventArgs e)
         {
-            //KeysPressed.Add(e.KeyCode);
-
-            //a_pressed = false;
-            //b_pressed = false;
-            //sel_pressed = false;
-            //st_pressed = false;
-            //up_pressed = false;
-            //down_pressed = false;
-            //left_pressed = false;
-            //right_pressed = false;
-
-            //q_pressed = false;
-            //c_pressed = false;
-            //space_pressed = false;
-            //p_pressed = false;
-            //f_pressed = false;
-            //l_pressed = false;
-            //r_pressed = false;
-
             if (e.KeyCode == "SDLK_x") a_pressed = true;
             if (e.KeyCode == "SDLK_z") b_pressed = true;
             if (e.KeyCode == "SDLK_a") sel_pressed = true;
@@ -112,13 +99,11 @@ namespace NES
             if (e.KeyCode == "SDLK_SPACE") space_pressed = true;
             if (e.KeyCode == "SDLK_r") r_pressed = true;
             if (e.KeyCode == "SDLK_q") q_pressed = true;
-
         }
 
         // key up event from the game engine
         public void KeyUpHandler(object sender, KeyEventArgs e)
         {
-
             if (e.KeyCode == "SDLK_x") a_pressed = false;
             if (e.KeyCode == "SDLK_z") b_pressed = false;
             if (e.KeyCode == "SDLK_a") sel_pressed = false;
@@ -138,15 +123,44 @@ namespace NES
 
         }
 
+        public void ButtonHandler(object sender, ControllerEventArgs e)
+        {
+            if (e.Button == ControllerButton.A) a_pressed = true;
+            if (e.Button == ControllerButton.B) b_pressed = true;
+            if (e.Button == ControllerButton.Select) sel_pressed = true;
+            if (e.Button == ControllerButton.Start) st_pressed = true;
+            if (e.Button == ControllerButton.Up) up_pressed = true;
+            if (e.Button == ControllerButton.Down) down_pressed = true;
+            if (e.Button == ControllerButton.Left) left_pressed = true;
+            if (e.Button == ControllerButton.Right) right_pressed = true;
+        }
+
+        public void ButtonUpHandler(object sender, ControllerEventArgs e)
+        {
+            if (e.Button == ControllerButton.A) a_pressed = false;
+            if (e.Button == ControllerButton.B) b_pressed = false;
+            if (e.Button == ControllerButton.Select) sel_pressed = false;
+            if (e.Button == ControllerButton.Start) st_pressed = false;
+            if (e.Button == ControllerButton.Up) up_pressed = false;
+            if (e.Button == ControllerButton.Down) down_pressed = false;
+            if (e.Button == ControllerButton.Left) left_pressed = false;
+            if (e.Button == ControllerButton.Right) right_pressed = false;
+        }
+
         //public Sprite testSprite = new Sprite("controller.png");
 
         // Constructor
         public NESSystem()
         {
             // instantiate the game engine - set the key event handlers
+            //engine = new Engine(settings.WindowSettings[WindowSettingTypes.CPUView], "SteveNES");
             engine = new Engine(settings.WindowSettings[WindowSettingTypes.NES_Triple], "SteveNES");
             engine.KeyDown += KeyDownHandler;
             engine.KeyUp += KeyUpHandler;
+            engine.ButtonDown += ButtonHandler;
+            engine.ButtonUp += ButtonUpHandler;
+
+            //statsWindow = new Engine(settings.WindowSettings[WindowSettingTypes.HD_Double], "CPU");
 
             // instantiate the NES - inject the game engine dependency
             nes = new Bus();
@@ -155,39 +169,55 @@ namespace NES
             SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS_CAP;
 
             // Load that cartridge
+
+            // test
+            //cartridge = new Cartridge("nestest.nes");
+            //cartridge = new Cartridge("color_test.nes");
+
+
             // MAPPER 000
-            cartridge = new Cartridge("nestest.nes");
-            //cartridge = new Cartridge("smb.nes");
+            cartridge = new Cartridge("smb.nes");
             //cartridge = new Cartridge("Donkey Kong.nes");
             //cartridge = new Cartridge("1942 (Japan, USA).nes");
             //cartridge = new Cartridge("Kung Fu (Japan, USA).nes");
             //cartridge = new Cartridge("Excitebike (Japan, USA).nes");
 
-            // MAPPER 001 - BUGGIES
-            //cartridge = new Cartridge("Legend of Zelda, The (USA) (Rev A).nes");            
+            // MAPPER 001 - Worky
             //cartridge = new Cartridge("Tetris (USA).nes");
-            //cartridge = new Cartridge("Zelda II - The Adventure of Link (USA).nes");
             //cartridge = new Cartridge("Castlevania II - Simon's Quest (USA).nes");
             //cartridge = new Cartridge("Mega Man 2 (USA).nes");
-            //cartridge = new Cartridge("Final Fantasy (USA).nes");
-            //cartridge = new Cartridge("Metroid (USA).nes");
             //cartridge = new Cartridge("Ninja Gaiden (USA).nes");
             //cartridge = new Cartridge("Adventures in the Magic Kingdom (USA).nes");
             //cartridge = new Cartridge("Chip 'n Dale Rescue Rangers (USA).nes");
             //cartridge = new Cartridge("Monster Party (USA).nes");
 
+            // Mapper 001 no worky
+            //cartridge = new Cartridge("Legend of Zelda, The (USA) (Rev A).nes");            
+            //cartridge = new Cartridge("Zelda II - The Adventure of Link (USA).nes");
+            //cartridge = new Cartridge("Final Fantasy (USA).nes");
+            //cartridge = new Cartridge("Metroid (USA).nes");
+
+
             // MAPPER 002
             //cartridge = new Cartridge("DuckTales (USA).nes");
             //cartridge = new Cartridge("Guardian Legend, The (USA).nes");
             //cartridge = new Cartridge("Castlevania (USA) (Rev A).nes");
-
             //cartridge = new Cartridge("Mickey Mousecapade (USA).nes");
             //cartridge = new Cartridge("Gradius (USA).nes");
+
+            // Mapper 004 - BUGGIES
+            //cartridge = new Cartridge("Metal Storm (USA).nes");
+            //cartridge = new Cartridge("StarTropics (USA).nes");
+            //cartridge = new Cartridge("Super Mario Bros. 2 (USA) (Rev A).nes");
+            //cartridge = new Cartridge("Super Mario Bros. 3 (USA) (Rev A).nes");
+            //cartridge = new Cartridge("Mega Man 3 (USA).nes");
+            //cartridge = new Cartridge("Ninja Gaiden II - The Dark Sword of Chaos (USA).nes");
+            //cartridge = new Cartridge("Ninja Gaiden III - The Ancient Ship of Doom (USA).nes");
 
             nes.InsertCartridge(cartridge);
 
             // DISASSEMBLE - and a way to log it
-            //asm = nes.cpu.Disassemble(0x0000, 0xFFFF);
+            asm = nes.cpu.Disassemble(0x0000, 0xFFFF);
             //var asString = string.Join(Environment.NewLine, asm);
             //Log.Debug($"{asString}");
 
@@ -198,7 +228,9 @@ namespace NES
             // Finally - run the game engine which will call the function sent
             // to it as rapidly as possible
             engine.Run(renderFrame: RenderFrame);
+            //await statsWindow.Run(renderFrame: RenderStats);
 
+            //StartWindows();
 
             // Old test code
             //string program = "A20A8E0000A2038E0100AC0000A900186D010088D0FA8D0200EAEAEA";
@@ -215,6 +247,28 @@ namespace NES
 
 
         }
+
+        //private async Task StartWindows()
+        //{
+
+        //    var tasks = new List<Task>();
+        //    tasks.Add(Task.Run(() => { engine.Run(renderFrame: RenderFrame); }));
+        //    tasks.Add(Task.Run(() => { statsWindow.Run(renderFrame: RenderStats); }));
+
+        //    await Task.WhenAll(tasks);
+        //}
+
+        //public void RenderStats()
+        //{
+        //    statsWindow.ClearScreen(c_blue);
+
+        //    DrawCPU(20, 20);         // Draw CPU information
+
+        //    if (userQuit)
+        //    {
+        //        statsWindow.Quit();
+        //    }
+        //}
 
         // Called by the display engine - called as quickly as possible
         public void RenderFrame()
@@ -254,6 +308,18 @@ namespace NES
             nes.controller[0] |= (byte)(left_pressed ? 0x40 : 0x00);
             nes.controller[0] |= (byte)(right_pressed ? 0x80 : 0x00);
 
+
+
+
+
+            // if I want the input to switch to step emulation
+            if (nes.controller[0] > 0)
+            {
+                Log.Debug($"Controller hit: 0b{Convert.ToString(nes.controller[0], toBase: 2).PadLeft(8,'0')}");
+                //EmulationRun = false;
+                //f_pressed = true;
+            }
+
             // Handle more key input
             if (space_pressed && !space_latched)    // Space = run the emulation striaght up, stop only when I hit space again
             {
@@ -261,7 +327,11 @@ namespace NES
                 space_latched = true;
             }
             if (r_pressed) nes.Reset();     // Reset the system
-            if (q_pressed) engine.Quit();   // quit
+            if (q_pressed)
+            {
+                userQuit = true;
+                engine.Quit();   // quit
+            }
             if (p_pressed && !p_latched)    // Change the viewing palette applied to the viewable pattern table
             {
                 ++SelectedPalette;
@@ -334,45 +404,30 @@ namespace NES
             // Draw crap to the screen - Start with the emulation screen sprite:
             //engine.PixelDimensionTest(3);   // scale the screen by 3
             engine.DrawSprite(nes.ppu.GetScreen(), 0, 0, Flip.NONE);
-            //engine.PixelDimensionTest(2);   // put the scale back
+            //engine.PixelDimensionTest(1);   // put the scale back
             // TODO: formalize this scaling feature
 
-            int margin = 390;
-                        
+            int margin = 780;
+
             //DrawRam(2, 260, 0x0000, 16, 16);
             //DrawRam(2, 182, 0x8000, 16, 16);
-            //DrawCPU(margin, 150);         // Draw CPU information
-            //DrawCode(margin, 220, 25);       // Draw the disassembled code
+            //engine.PixelDimensionTest(2);
+            //DrawPatternAndPalette(margin / 2, 5 / 2);
+            //DrawCPU(margin / 2, 150);         // Draw CPU information
+            //DrawController(1170 / 2, 150);    // Draw the controller info
+            //engine.PixelDimensionTest(1);
+
+            //DrawCode(margin, 220 + 220, 25);       // Draw the disassembled code
 
             //engine.PixelDimensionTest(1);
-            //DrawOAM(margin, 230, 24);    /// draw top OAM entries
+            //DrawOAM(margin + 240, 230 + 220, 25);    /// draw top OAM entries
             //engine.PixelDimensionTest(2);
-            //DrawRam(2, 365, 0x0000, 16, 16);    // Draw the zero page of RAM
+            //DrawRam(margin, 485 + 220, 0x0000, 16, 16);    // Draw the zero page of RAM
 
 
 
-            //DrawController(610, 150);    // Draw the controller info
 
-            // Draw the palettes and pattern tables
-            //margin = 390;
-            //int starty = 5;
-            ////int downfactor = 40;
-            //const int SwatchSize = 6;
 
-            //for (int p = 0; p < 8; p++)
-            //{
-            //    for (int s = 0; s < 4; s++)
-            //    {
-            //        int factor = p * (SwatchSize * 5) + s * SwatchSize;
-            //        engine.DrawQuadFilled(margin + factor, starty, margin + factor + SwatchSize, starty + SwatchSize, nes.ppu.GetColorFromPaletteRam((byte)p, (byte)s));
-            //        // FillRect(265 + p * (SwatchSize * 5) + s * SwatchSize, 340, SwatchSize, SwatchSize, nes.ppu.GetColorFromPaletteRam(p, s));
-            //    }
-            //}
-
-            //engine.DrawQuad(margin + SelectedPalette * (SwatchSize * 5) - 1, starty, margin + SelectedPalette * (SwatchSize * 5) + (SwatchSize * 4), starty + SwatchSize, c_white);
-
-            //engine.DrawSprite(nes.ppu.GetPatternTable(0, SelectedPalette), margin, starty + 9, Flip.NONE);
-            //engine.DrawSprite(nes.ppu.GetPatternTable(1, SelectedPalette), margin + 132, starty + 9, Flip.NONE);
 
 
 
@@ -394,6 +449,29 @@ namespace NES
             //engine.DrawText(mouseX, mouseY, $"({mouseX},{mouseY})", c_white);
 
 
+        }
+
+        public void DrawPatternAndPalette(int x, int y)
+        {
+            // Draw the palettes and pattern tables
+            int margin = x;
+            int starty = y;
+            //int downfactor = 40;
+            const int SwatchSize = 6;
+
+            for (int p = 0; p < 8; p++)
+            {
+                for (int s = 0; s < 4; s++)
+                {
+                    int factor = p * (SwatchSize * 5) + s * SwatchSize;
+                    engine.DrawQuadFilled(margin + factor, starty, margin + factor + SwatchSize, starty + SwatchSize, nes.ppu.GetColorFromPaletteRam((byte)p, (byte)s));
+                    // FillRect(265 + p * (SwatchSize * 5) + s * SwatchSize, 340, SwatchSize, SwatchSize, nes.ppu.GetColorFromPaletteRam(p, s));
+                }
+            }
+            engine.DrawQuad(margin + SelectedPalette * (SwatchSize * 5) - 1, starty, margin + SelectedPalette * (SwatchSize * 5) + (SwatchSize * 4), starty + SwatchSize, c_white);
+
+            engine.DrawSprite(nes.ppu.GetPatternTable(0, SelectedPalette), margin, starty + 9, Flip.NONE);
+            engine.DrawSprite(nes.ppu.GetPatternTable(1, SelectedPalette), margin + 132, starty + 9, Flip.NONE);
         }
 
         // helper function to draw the controller input
