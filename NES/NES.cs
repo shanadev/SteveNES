@@ -163,7 +163,7 @@ namespace NES
             //statsWindow = new Engine(settings.WindowSettings[WindowSettingTypes.HD_Double], "CPU");
 
             // instantiate the NES - inject the game engine dependency
-            nes = new Bus();
+            nes = new Bus(this);
 
             // Set up timer information
             SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS_CAP;
@@ -173,10 +173,51 @@ namespace NES
             // test
             //cartridge = new Cartridge("nestest.nes");
             //cartridge = new Cartridge("color_test.nes");
+            //cartridge = new Cartridge("ppu_open_bus.nes");
+            //cartridge = new Cartridge("test_ppu_read_buffer.nes");
+            //cartridge = new Cartridge("palette_ram.nes"); <-- passed
+            //cartridge = new Cartridge("power_up_palette.nes"); 
+            //cartridge = new Cartridge("sprite_ram.nes");
+            //cartridge = new Cartridge("vbl_clear_time.nes");
+            //cartridge = new Cartridge("vram_access.nes");
+            //cartridge = new Cartridge("official_only.nes");
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/240pee/240pee.nes");
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/blargg_nes_cpu_test5/official.nes");
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/blargg_nes_cpu_test5/cpu.nes");
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/blargg_ppu_tests_2005.09.15b/palette_ram.nes");
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/blargg_ppu_tests_2005.09.15b/power_up_palette.nes");
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/blargg_ppu_tests_2005.09.15b/sprite_ram.nes");
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/blargg_ppu_tests_2005.09.15b/vbl_clear_time.nes");  // to late
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/blargg_ppu_tests_2005.09.15b/vram_access.nes");  // PASSED
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/branch_timing_tests/3.Forward_Branch.nes");// PASSED
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/mmc3_irq_tests/1.Clocking.nes");  // 3) Should decrement when A12 is toggled via $2006
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/mmc3_irq_tests/6.MMC3_rev_B.nes");  // 2) Counter isn't working when reloaded with 255
+            //2) IRQ should be set when reloading to 0 after clear
+            //2) Should reload and set IRQ every clock when reload is 0
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/nmi_sync/demo_ntsc.nes");  //
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/oam_read/oam_read.nes");  // PASSED
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/oam_stress/oam_stress.nes");  // \Failes?
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/other/oam3.nes");  // 
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/scanline/scanline.nes");  // Passed!
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/nes-test-roms/scrolltest/scroll.nes");  // Passed!
+
+            // mapper 0 test
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/testroms/M0_P32K_C8K_V.nes");  // pass
+
+            // Mapper 1
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/testroms/M1_P128K.nes");  // ???
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/testroms/M1_P128K_C32K_S8K.nes");  // ???
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/testroms/M1_P128K_C128K.nes");  // ???
+
+            // Map 2
+            //cartridge = new Cartridge("../../../../../../EmulatorTests/testroms/M2_P128K_V.nes");  // ???
+
+
+
 
 
             // MAPPER 000
-            cartridge = new Cartridge("smb.nes");
+            //cartridge = new Cartridge("smb.nes");
             //cartridge = new Cartridge("Donkey Kong.nes");
             //cartridge = new Cartridge("1942 (Japan, USA).nes");
             //cartridge = new Cartridge("Kung Fu (Japan, USA).nes");
@@ -190,12 +231,12 @@ namespace NES
             //cartridge = new Cartridge("Adventures in the Magic Kingdom (USA).nes");
             //cartridge = new Cartridge("Chip 'n Dale Rescue Rangers (USA).nes");
             //cartridge = new Cartridge("Monster Party (USA).nes");
+            //cartridge = new Cartridge("Legend of Zelda, The (USA) (Rev A).nes");            
+            //cartridge = new Cartridge("Final Fantasy (USA).nes");
+            cartridge = new Cartridge("Metroid (USA).nes");
 
             // Mapper 001 no worky
-            //cartridge = new Cartridge("Legend of Zelda, The (USA) (Rev A).nes");            
             //cartridge = new Cartridge("Zelda II - The Adventure of Link (USA).nes");
-            //cartridge = new Cartridge("Final Fantasy (USA).nes");
-            //cartridge = new Cartridge("Metroid (USA).nes");
 
 
             // MAPPER 002
@@ -217,7 +258,7 @@ namespace NES
             nes.InsertCartridge(cartridge);
 
             // DISASSEMBLE - and a way to log it
-            asm = nes.cpu.Disassemble(0x0000, 0xFFFF);
+            //asm = nes.cpu.Disassemble(0x0000, 0xFFFF);
             //var asString = string.Join(Environment.NewLine, asm);
             //Log.Debug($"{asString}");
 
@@ -313,12 +354,12 @@ namespace NES
 
 
             // if I want the input to switch to step emulation
-            if (nes.controller[0] > 0)
-            {
-                Log.Debug($"Controller hit: 0b{Convert.ToString(nes.controller[0], toBase: 2).PadLeft(8,'0')}");
-                //EmulationRun = false;
-                //f_pressed = true;
-            }
+            //if (nes.controller[0] > 0)
+            //{
+            //    Log.Debug($"Controller hit: 0b{Convert.ToString(nes.controller[0], toBase: 2).PadLeft(8,'0')}");
+            //    EmulationRun = false;
+            //    l_pressed = true;
+            //}
 
             // Handle more key input
             if (space_pressed && !space_latched)    // Space = run the emulation striaght up, stop only when I hit space again
@@ -422,7 +463,7 @@ namespace NES
             //engine.PixelDimensionTest(1);
             //DrawOAM(margin + 240, 230 + 220, 25);    /// draw top OAM entries
             //engine.PixelDimensionTest(2);
-            //DrawRam(margin, 485 + 220, 0x0000, 16, 16);    // Draw the zero page of RAM
+            //DrawRam(margin, 485 + 220, 0xFF00, 16, 16);    // Draw the zero page of RAM
 
 
 

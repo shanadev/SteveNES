@@ -431,8 +431,18 @@ namespace NES
                     case 0x0007:        // PPU Data
                         data = ppu_data_buffer;
                         ppu_data_buffer = ppuRead(vram_addr.reg);
-                        if (vram_addr.reg > 0x3F00) data = ppu_data_buffer;
+                        //ppu_data_buffer = ppuRead(addr);
+                        if (vram_addr.reg > 0x3F00)
+                        {
+                            data = ppu_data_buffer;
+                            //vram_addr.reg += (ushort)(control.increment_mode > 0 ? 32 : 1);
+
+                            ppu_data_buffer = ppuRead((ushort)(vram_addr.reg - 0x1000));
+                        }
+                        //if (addr > 0x3F00) data = ppu_data_buffer;
                         //Log.Debug($"Read from PPU: addr {Convert.ToString(ppu_address, toBase: 16).PadLeft(4, '0')} - data {Convert.ToString(data, toBase: 16).PadLeft(2, '0')}");
+
+
 
                         vram_addr.reg += (ushort)(control.increment_mode > 0 ? 32 : 1);
 
@@ -464,6 +474,7 @@ namespace NES
                     break;
                 case 0x0004:        // OAM Data
                     OAM[oam_addr] = data;
+                    oam_addr++;
                     break;
                 case 0x0005:        // Scroll
                     if (address_latch == 0)
@@ -489,7 +500,7 @@ namespace NES
                     else
                     {
                         tram_addr.reg = (ushort)((tram_addr.reg & 0xFF00) | data);
-                        vram_addr = tram_addr;
+                        vram_addr.reg = tram_addr.reg;
                         address_latch = 0;
                     }
                     break;
@@ -509,7 +520,7 @@ namespace NES
 
             if (cart.ppuRead(addr, out data))
             {
-
+                    
             }
             else if (addr >= 0x0000 && addr <= 0x1FFF)
             {
@@ -816,7 +827,7 @@ namespace NES
 
                 if (scanline == -1 && cycle == 1)
                 {
-                    Log.Debug("Vertical Blank Reached");
+                    //Log.Debug("Vertical Blank Reached");
                     status.vertical_blank = 0;
                     status.sprite_zero_hit = 0;
                     status.sprite_overflow = 0;

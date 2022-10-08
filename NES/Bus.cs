@@ -15,11 +15,14 @@ namespace NES
         public Dictionary<ushort, string> asmPRG = new Dictionary<ushort, string>();
 
         // devices on the bus
+        public NESSystem nes;
         public CPU cpu;
         public PPU ppu;
         public byte[] cpuRam = new byte[2048];
         public Cartridge cart;
         public byte[] controller = new byte[2];
+
+        public byte dma_addr_start = 0;
 
         // engine insance passed from the main program
         // This is just being passed along to the PPU honestly
@@ -41,8 +44,9 @@ namespace NES
         bool dma_wait = true;  // are we waiting to start DMA?
 
         // Constructor - engine comes in, set up Ram, CPU and PPU
-        public Bus()
+        public Bus(NESSystem n)
         {
+            nes = n;
             //this.engine = engine;
             cpuRam = Enumerable.Repeat<byte>(0x00, cpuRam.Length).ToArray();
             cpu = new CPU(this);
@@ -57,7 +61,14 @@ namespace NES
             if (cart.cpuWrite(addr, data))  // give cart first crack at the write
             {
                 // since there was a picked up write, I'm assuming a PRG bank change, so
-                //if (addr >= 0x8000) asmPRG = cpu.Disassemble(0x8000, 0xFFFF);
+                //if (addr >= 0x8000)
+                //{
+                //    asmPRG = cpu.Disassemble(0x8000, 0xFFFF);
+                //    foreach (var pair in asmPRG)
+                //    {
+                //        nes.asm[pair.Key] = pair.Value;
+                //    }
+                //}
             }
             else if (addr >= 0x0000 && addr <= 0x1FFF) // write to ram - 2k mirrored to 8k
             {
@@ -70,7 +81,8 @@ namespace NES
             else if (addr == 0x4014)
             {
                 dma_page = data;
-                dma_addr = 0x00;
+                dma_addr = cpuRead(0x2003, false);
+                dma_addr_start = dma_addr;
                 dma_transfer = true;
             }
             else if (addr >= 0x4016 && addr <= 0x4017)  // Write to the controller addresses - sets the state
@@ -181,10 +193,11 @@ namespace NES
                         }
                         else
                         {
-                            ppu.OAM[dma_addr] = dma_data;
+                            cpuWrite(0x2004, dma_data);
+                            //ppu.OAM[dma_addr] = dma_data;
                             dma_addr++;
 
-                            if (dma_addr == 0x00)
+                            if (dma_addr == dma_addr_start)
                             {
                                 dma_transfer = false;
                                 dma_wait = true;

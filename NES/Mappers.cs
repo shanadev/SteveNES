@@ -222,6 +222,8 @@ namespace NES
 
                 RAMStatic[addr & 0x1FFF] = data;
 
+                // TODO: Write to file here
+
                 return true;
             }
 
@@ -231,12 +233,14 @@ namespace NES
                 {
                     LoadRegister = 0x00;
                     LoadRegisterCount = 0;
-                    ControlRegister = (byte)(ControlRegister | 0x0C);
+                    ControlRegister = (byte)(ControlRegister | 0x0C);  // 12 - 0b1100
                 }
                 else
                 {
+                    // TODO: When the serial port is written to on consecutive cycles, it ignores every write after the first. In practice, this only happens when the CPU executes read-modify-write instructions, which first write the original value before writing the modified one on the next cycle.
                     LoadRegister >>= 1;
                     LoadRegister |= (byte)((data & 0x01) << 4);
+                    //LoadRegister |= (byte)((data << 4) & 0x01);
                     LoadRegisterCount++;
 
                     if (LoadRegisterCount == 5)
@@ -550,6 +554,7 @@ namespace NES
 
         public Mapper_004(byte prgBanks, byte chrBanks) : base(prgBanks, chrBanks)
         {
+            RAMStatic.AddRange(Enumerable.Repeat<byte>(0x00, 8 * 1024).ToArray());
         }
 
         public override bool cpuMapRead(ushort addr, out uint mapped_addr, out byte data)

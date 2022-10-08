@@ -31,6 +31,9 @@ namespace NES
     /// </summary>
     public class CPU
     {
+        private uint instructCount = 0;
+        public string debugmodedata = "";
+
         // We'll inject the Bus that this CPU will belong to so we can call read/write on the bus
         private Bus bus;
 
@@ -77,6 +80,7 @@ namespace NES
                 status &= (byte)(~((byte)f));
             }
         }
+        public byte debugfetched = 0x00;
 
         // Fetch data from addr_abs which should be set by the addressing mode function happening first
         // which will set addr_abs
@@ -86,6 +90,7 @@ namespace NES
             {
                 fetched = read(addr_abs);
             }
+            debugfetched = fetched;
             return fetched;
         }
 
@@ -172,6 +177,11 @@ namespace NES
             // doing everything at once
             if (cycles == 0)
             {
+                var debugpc = pc;
+                if (pc == 0x6EE9)
+                {
+                    Console.WriteLine("9048");
+                }
                 opcode = read(pc);
                 SetFlag(FLAGS6502.U, true);
                 pc++;
@@ -184,9 +194,14 @@ namespace NES
 
                 cycles += (modeXtraCycle & opXtraCycle);
 
+
                 //Log.Debug($"CPU Clock - Instruction: {lookup[opcode].Name}");
-                Log.Debug($"{Hex(opcode,2)}:{lookup[opcode].Name} - {clock_count} PC:{Hex(pc,4)} A:{Hex(a,2)} X:{Hex(x,2)} Y:{Hex(y,2)} Status: {(GetFlag(FLAGS6502.N) > 0 ? "N" : ".")}{(GetFlag(FLAGS6502.V) > 0 ? "V" : ".")}{(GetFlag(FLAGS6502.U) > 0 ? "U" : ".")}{(GetFlag(FLAGS6502.B) > 0 ? "B" : ".")}{(GetFlag(FLAGS6502.D) > 0 ? "D" : ".")}{(GetFlag(FLAGS6502.I) > 0 ? "I" : ".")}{(GetFlag(FLAGS6502.Z) > 0 ? "Z" : ".")}{(GetFlag(FLAGS6502.C) > 0 ? "C" : ".")}, Stack: {Hex(stkp,2)}");
+                //Log.Debug($"{clock_count-8, 10} - i{instructCount,10} A:{Hex(a, 2)} X:{Hex(x, 2)} Y:{Hex(y, 2)} S:{Hex(stkp, 2)} Status: {(GetFlag(FLAGS6502.N) > 0 ? "N" : ".")}{(GetFlag(FLAGS6502.V) > 0 ? "V" : ".")}{(GetFlag(FLAGS6502.U) > 0 ? "U" : ".")}{(GetFlag(FLAGS6502.B) > 0 ? "B" : ".")}{(GetFlag(FLAGS6502.D) > 0 ? "D" : ".")}{(GetFlag(FLAGS6502.I) > 0 ? "I" : ".")}{(GetFlag(FLAGS6502.Z) > 0 ? "Z" : ".")}{(GetFlag(FLAGS6502.C) > 0 ? "C" : ".")}  PC:{Hex(debugpc, 4)}: {Hex(opcode,2)}    {lookup[opcode].Name} {debugmodedata, 20} {Hex((int)debugfetched,2),4}");
+                debugmodedata = "";
+                debugfetched = 0x00;
+
                 SetFlag(FLAGS6502.U, true);
+                instructCount++;
             }
 
             clock_count++;
@@ -221,6 +236,7 @@ namespace NES
         {
             if (GetFlag(FLAGS6502.I) == 0)
             {
+                //Log.Debug("IRQ happening");
                 write((ushort)(0x0100 + stkp), (byte)((pc >> 8) & 0x00FF));
                 stkp--;
                 write((ushort)(0x0100 + stkp), (byte)(pc & 0x00FF));
@@ -245,7 +261,7 @@ namespace NES
         // Non maskable interrupt (can't stop this one)
         public void NMI()
         {
-
+            //Log.Debug("NMI Happening");
             write((ushort)(0x0100 + stkp), (byte)((pc >> 8) & 0x00FF));
             stkp--;
             write((ushort)(0x0100 + stkp), (byte)(pc & 0x00FF));
@@ -275,14 +291,17 @@ namespace NES
         {
             fetched = a;
             return 0;
-
+            debugmodedata += "IMP";
         }
 
         public byte ZP0() // Zero Page
         {
+
             addr_abs = read(pc);
             pc++;
             addr_abs &= 0x00FF;
+            debugmodedata += $"addr({Hex(addr_abs, 4)}) ZP0";
+
             return 0;
         }
 
@@ -291,6 +310,8 @@ namespace NES
             addr_abs = (ushort)(read(pc) + y);
             pc++;
             addr_abs &= 0x00FF;
+            debugmodedata += $"addr({Hex(addr_abs, 4)}) ZPY";
+
             return 0;
         }
 
@@ -302,6 +323,7 @@ namespace NES
             pc++;
 
             addr_abs = (ushort)((hi << 8) | lo);
+            debugmodedata += $"addr({Hex(addr_abs, 4)}) ABS";
 
             return 0;
         } 
@@ -315,6 +337,7 @@ namespace NES
 
             addr_abs = (ushort)((hi << 8) | lo);
             addr_abs += y;
+            debugmodedata += $"addr({Hex(addr_abs, 4)}) ABY";
 
             // check if we went to a new page - compare our answer hi bits with the input hi bits
             if ((addr_abs & 0xFF00) != (hi << 8))
@@ -336,6 +359,7 @@ namespace NES
             ushort hi = read((ushort)((ushort)(input + x + 1) & 0x00FF));
 
             addr_abs = (ushort)((hi << 8) | lo);
+            debugmodedata += $"addr({Hex(addr_abs, 4)}) IZX";
 
             return 0;
 
@@ -344,6 +368,8 @@ namespace NES
         public byte IMM() // Immediate
         {
             addr_abs = pc++;
+            debugmodedata += $"addr({Hex(addr_abs, 4)}) IMM";
+
             return 0;
         }
 
@@ -352,6 +378,8 @@ namespace NES
             addr_abs = (ushort)(read(pc) + x);
             pc++;
             addr_abs &= 0x00FF;
+            debugmodedata += $"addr({Hex(addr_abs, 4)}) ZPX";
+
             return 0;
         }
 
@@ -363,6 +391,8 @@ namespace NES
             {
                 addr_rel |= 0xFF00;
             }
+            debugmodedata += $"addrRel({Hex(addr_rel, 4)}) REL";
+
             return 0;
         }
 
@@ -375,6 +405,7 @@ namespace NES
 
             addr_abs = (ushort)((hi << 8) | lo);
             addr_abs += x;
+            debugmodedata += $"addr({Hex(addr_abs, 4)}) ABX";
 
             // check if we went to a new page - compare our answer hi bits with the input hi bits
             if ((addr_abs & 0xFF00) != (hi << 8))
@@ -405,6 +436,7 @@ namespace NES
             {
                 addr_abs = (ushort)((ushort)(read((ushort)(ptr + 1)) << 8) | read((ushort)(ptr + 0)));
             }
+            debugmodedata += $"addr({Hex(addr_abs, 4)}) IND";
 
             return 0;
         }
@@ -419,6 +451,7 @@ namespace NES
 
             addr_abs = (ushort)((hi << 8) | lo);
             addr_abs += y;
+            debugmodedata += $"addr({Hex(addr_abs, 4)}) IZY";
 
             if ((addr_abs & 0x00FF) != (hi << 8))
             {
@@ -629,21 +662,25 @@ namespace NES
             stkp--;
             write((ushort)(0x0100 + stkp), (byte)(pc & 0x00FF));
             stkp--;
-
+            
             SetFlag(FLAGS6502.B, true);
 
             write((ushort)(0x0100 + stkp), status);
             stkp--;
 
-            SetFlag(FLAGS6502.B, false);
-            
+            //SetFlag(FLAGS6502.B, false);
+
             //addr_abs = 0xFFFE;
             //ushort lo = read((ushort)(addr_abs + 0));
             //ushort hi = read((ushort)(addr_abs + 1));
 
             //pc = (ushort)((hi << 8) | lo);
 
-            pc = (ushort)((ushort)(read(0xFFFE) | read(0xFFFF)) << 8);
+            ushort lo = read(0xFFFE);
+            ushort hi = read(0xFFFF);
+            pc = (ushort)(hi << 8 | lo);
+
+            //pc = (ushort)((read(0xFFFE) | read(0xFFFF)) << 8);
 
 
             return 0;
@@ -1019,12 +1056,13 @@ namespace NES
 
             SetFlag(FLAGS6502.C, (byte)(fetched & 0x01) > 0);
 
-            SetFlag(FLAGS6502.Z, (byte)(fetched & 0x00FF) == 0);
+            SetFlag(FLAGS6502.Z, (byte)(result & 0x00FF) == 0);
             SetFlag(FLAGS6502.N, (result & 0x80) > 0);
 
             if (lookup[opcode].AddrMode == IMP)
             {
                 a = (byte)(result & 0x00FF);
+                //a = result;
             }
             else
             {

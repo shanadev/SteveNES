@@ -176,7 +176,7 @@ namespace NES
             {
                 if (mapped_addr == 0xFFFFFFFF)
                 {
-                    data = 0x00;
+                    //data = 0x00;
                     return true;
                 }
                 else
@@ -220,9 +220,16 @@ namespace NES
             uint mapped_addr = 0;
             if (mapper.ppuMapRead(addr, out mapped_addr))
             {
-                data = CHR[(int)mapped_addr];
-                //Log.Debug($"Read from Cart CHR - mapped_addr:0x{Convert.ToString(mapped_addr, toBase: 16).PadLeft(4, '0')} - data:0x{Convert.ToString(data, toBase: 16).PadLeft(2, '0')}");
+                if (CHR.Count() > 0)
+                {
+                    data = CHR[(int)mapped_addr];
 
+                }
+                //Log.Debug($"Read from Cart CHR - mapped_addr:0x{Convert.ToString(mapped_addr, toBase: 16).PadLeft(4, '0')} - data:0x{Convert.ToString(data, toBase: 16).PadLeft(2, '0')}");
+                else
+                {
+                    data = 0x00;
+                }
                 return true;
             }
             else
@@ -237,7 +244,14 @@ namespace NES
             uint mapped_addr = 0;
             if (mapper.ppuMapWrite(addr, out mapped_addr))
             {
-                CHR[(int)mapped_addr] = data;
+                if (CHR.Count() > 0)
+                {
+                    CHR[(int)mapped_addr] = data;
+                }
+                else
+                {
+
+                }
                 //Log.Debug($"Write to Cart CHR - mapped_addr:0x{Convert.ToString(mapped_addr, toBase: 16).PadLeft(4, '0')} - data:0x{Convert.ToString(data, toBase: 16).PadLeft(2, '0')}");
 
                 return true;
