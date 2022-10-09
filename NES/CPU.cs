@@ -178,7 +178,7 @@ namespace NES
             if (cycles == 0)
             {
                 var debugpc = pc;
-                if (pc == 0x6EE9)
+                if (pc == 0x9A46 && y == 0xFF)
                 {
                     Console.WriteLine("9048");
                 }

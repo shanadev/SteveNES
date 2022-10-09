@@ -19,6 +19,9 @@ namespace NES
         protected byte CHRbanks = 0;
         protected MIRROR mirrorMode;
 
+        public List<byte> RAMStatic = new List<byte>();
+
+
         public Mapper(byte prgBanks, byte chrBanks)
         {
             PRGbanks = prgBanks;
@@ -166,11 +169,30 @@ namespace NES
 
         private MIRROR mirrorMode = MIRROR.HORIZONTAL;
 
-        private List<byte> RAMStatic = new List<byte>();
+        //public List<byte> RAMStatic = new List<byte>();
+
+        //public byte[] SaveBytes
+        //{
+        //    get { return RAMStatic.ToArray(); }
+        //    set {
+        //        RAMStatic.Clear();
+        //        RAMStatic.AddRange(value.ToArray());
+        //    }
+        //}
 
         public Mapper_001(byte prgBanks, byte chrBanks) : base(prgBanks, chrBanks)
         {
-            RAMStatic.AddRange(Enumerable.Repeat<byte>(0x00, 32 * 1024).ToArray());
+            //if (File.Exists("savetest.sav"))
+            //{
+            //    using BinaryReader reader = new BinaryReader(File.OpenRead("savetest.sav"));
+            //    {
+            //        RAMStatic.AddRange(reader.ReadBytes(32 * 1024).ToArray());
+            //    }
+            //}
+            //else
+            //{
+                RAMStatic.AddRange(Enumerable.Repeat<byte>(0x00, 32 * 1024).ToArray());
+            //}
         }
 
 
@@ -222,7 +244,7 @@ namespace NES
 
                 RAMStatic[addr & 0x1FFF] = data;
 
-                // TODO: Write to file here
+
 
                 return true;
             }
@@ -549,7 +571,7 @@ namespace NES
         private uint IRQCounter = 0x0000;
         private uint IRQReload = 0x0000;
          
-        private List<byte> RAMStatic = new List<byte>();
+        //private List<byte> RAMStatic = new List<byte>();
 
 
         public Mapper_004(byte prgBanks, byte chrBanks) : base(prgBanks, chrBanks)
@@ -630,10 +652,15 @@ namespace NES
                     }
                     else
                     {
-                        CHRBank[0] = Register[0] * 0x0400 + 0x0400;
-                        CHRBank[1] = (Register[0] & 0xFE) * 0x0400;
-                        CHRBank[2] = Register[1] * 0x0400 + 0x0400;
-                        CHRBank[3] = (Register[1] & 0xFE) * 0x0400;
+                        CHRBank[0] = (Register[0] & 0xFE) * 0x0400;
+                        CHRBank[1] = Register[0] * 0x0400 + 0x0400;
+                        CHRBank[2] = (Register[1] & 0xFE) * 0x0400;
+                        CHRBank[3] = Register[1] * 0x0400 + 0x0400;
+
+                        //CHRBank[0] = 
+                        //CHRBank[1] = 
+                        //CHRBank[2] = 
+                        //CHRBank[3] = 
                         CHRBank[4] = Register[2] * 0x0400;
                         CHRBank[5] = Register[3] * 0x0400;
                         CHRBank[6] = Register[4] * 0x0400;
@@ -718,41 +745,50 @@ namespace NES
             if (addr >= 0x0000 && addr <= 0x03FF)
             {
                 mapped_addr = (uint)(CHRBank[0] + (addr & 0x03FF));
+                return true;
             }
 
             if (addr >= 0x0400 && addr <= 0x07FF)
             {
                 mapped_addr = (uint)(CHRBank[1] + (addr & 0x03FF));
+                return true;
+
             }
 
             if (addr >= 0x0800 && addr <= 0x0BFF)
             {
                 mapped_addr = (uint)(CHRBank[2] + (addr & 0x03FF));
+                return true;
             }
 
             if (addr >= 0x0C00 && addr <= 0x0FFF)
             {
                 mapped_addr = (uint)(CHRBank[3] + (addr & 0x03FF));
+                return true;
             }
 
             if (addr >= 0x1000 && addr <= 0x13FF)
             {
                 mapped_addr = (uint)(CHRBank[4] + (addr & 0x03FF));
+                return true;
             }
 
             if (addr >= 0x1400 && addr <= 0x17FF)
             {
                 mapped_addr = (uint)(CHRBank[5] + (addr & 0x03FF));
+                return true;
             }
 
             if (addr >= 0x1800 && addr <= 0x1BFF)
             {
                 mapped_addr = (uint)(CHRBank[6] + (addr & 0x03FF));
+                return true;
             }
 
             if (addr >= 0x1C00 && addr <= 0x1FFF)
             {
                 mapped_addr = (uint)(CHRBank[7] + (addr & 0x03FF));
+                return true;
             }
 
             mapped_addr = addr;

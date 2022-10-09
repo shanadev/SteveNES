@@ -217,43 +217,82 @@ namespace NES
 
 
             // MAPPER 000
-            //cartridge = new Cartridge("smb.nes");
-            //cartridge = new Cartridge("Donkey Kong.nes");
-            //cartridge = new Cartridge("1942 (Japan, USA).nes");
-            //cartridge = new Cartridge("Kung Fu (Japan, USA).nes");
-            //cartridge = new Cartridge("Excitebike (Japan, USA).nes");
+            //cartridge = new Cartridge("../../ROMS/000/smb.nes");
+            //cartridge = new Cartridge("../../ROMS/000/Donkey Kong.nes");
+            //cartridge = new Cartridge("../../ROMS/000/1942 (Japan, USA).nes");
+            //cartridge = new Cartridge("../../ROMS/000/Kung Fu (Japan, USA).nes");
+            //cartridge = new Cartridge("../../ROMS/000/Excitebike (Japan, USA).nes");
+
+
 
             // MAPPER 001 - Worky
-            //cartridge = new Cartridge("Tetris (USA).nes");
-            //cartridge = new Cartridge("Castlevania II - Simon's Quest (USA).nes");
-            //cartridge = new Cartridge("Mega Man 2 (USA).nes");
-            //cartridge = new Cartridge("Ninja Gaiden (USA).nes");
-            //cartridge = new Cartridge("Adventures in the Magic Kingdom (USA).nes");
-            //cartridge = new Cartridge("Chip 'n Dale Rescue Rangers (USA).nes");
-            //cartridge = new Cartridge("Monster Party (USA).nes");
-            //cartridge = new Cartridge("Legend of Zelda, The (USA) (Rev A).nes");            
-            //cartridge = new Cartridge("Final Fantasy (USA).nes");
-            cartridge = new Cartridge("Metroid (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Tetris (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Castlevania II - Simon's Quest (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Mega Man 2 (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Ninja Gaiden (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Adventures in the Magic Kingdom (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Chip 'n Dale Rescue Rangers (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Monster Party (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Legend of Zelda, The (USA) (Rev A).nes");            
+            //cartridge = new Cartridge("../../ROMS/001/Final Fantasy (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Metroid (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Double Dragon (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Dr. Mario (Japan, USA) (Rev A).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Dragon Warrior (USA) (Rev A).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Dragon Warrior II (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Faxanadu (USA) (Rev A).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Fester's Quest (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Kid Icarus (USA, Europe).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Lemmings (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Strider (USA).nes");
+
 
             // Mapper 001 no worky
-            //cartridge = new Cartridge("Zelda II - The Adventure of Link (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Zelda II - The Adventure of Link (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Dragon Warrior III (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/001/Dragon Warrior IV (USA).nes");
 
 
             // MAPPER 002
-            //cartridge = new Cartridge("DuckTales (USA).nes");
-            //cartridge = new Cartridge("Guardian Legend, The (USA).nes");
-            //cartridge = new Cartridge("Castlevania (USA) (Rev A).nes");
-            //cartridge = new Cartridge("Mickey Mousecapade (USA).nes");
-            //cartridge = new Cartridge("Gradius (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/002/DuckTales (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/002/Guardian Legend, The (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/002/Castlevania (USA) (Rev A).nes");
+            //cartridge = new Cartridge("../../ROMS/002/Mickey Mousecapade (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/002/Gradius (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/002/Contra (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/002/Ghosts'n Goblins (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/002/Mega Man (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/002/Skate or Die (USA).nes");
+
+            // Mapper 002 - no work
+            //cartridge = new Cartridge("../../ROMS/002/Top Gun (USA).nes");
+
+            // Mapper 003
+            //cartridge = new Cartridge("../../ROMS/003/Jaws (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/003/Paperboy (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/003/Spy Hunter (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Super Mario Bros. 2 (USA) (Rev A).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Super Mario Bros. 3 (USA) (Rev A).nes");
+
+            //cartridge = new Cartridge("../../ROMS/004/Teenage Mutant Ninja Turtles II - The Arcade Game (USA).nes");
+            cartridge = new Cartridge("../../ROMS/004/Teenage Mutant Ninja Turtles III - The Manhattan Project (USA).nes");
+
+
+
 
             // Mapper 004 - BUGGIES
-            //cartridge = new Cartridge("Metal Storm (USA).nes");
-            //cartridge = new Cartridge("StarTropics (USA).nes");
-            //cartridge = new Cartridge("Super Mario Bros. 2 (USA) (Rev A).nes");
-            //cartridge = new Cartridge("Super Mario Bros. 3 (USA) (Rev A).nes");
-            //cartridge = new Cartridge("Mega Man 3 (USA).nes");
-            //cartridge = new Cartridge("Ninja Gaiden II - The Dark Sword of Chaos (USA).nes");
-            //cartridge = new Cartridge("Ninja Gaiden III - The Ancient Ship of Doom (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Metal Storm (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/StarTropics (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Ninja Gaiden II - The Dark Sword of Chaos (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Ninja Gaiden III - The Ancient Ship of Doom (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Adventure Island II (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Batman - The Video Game (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Crystalis (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Double Dragon III - The Sacred Stones (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Kirby's Adventure (USA) (Rev A).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Little Nemo - The Dream Master (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/River City Ransom (USA).nes");
+            //cartridge = new Cartridge("../../ROMS/004/Shadowgate (USA).nes");
 
             nes.InsertCartridge(cartridge);
 
@@ -268,6 +307,7 @@ namespace NES
 
             // Finally - run the game engine which will call the function sent
             // to it as rapidly as possible
+            EmulationRun = true;
             engine.Run(renderFrame: RenderFrame);
             //await statsWindow.Run(renderFrame: RenderStats);
 

@@ -19,6 +19,10 @@ namespace NES
         private byte PRGbanks = 0;
         private byte CHRbanks = 0;
 
+        private bool hasSaveBattery = false;
+        //private string romFileName = "";
+        private string saveFilename = "";
+
         // header info
         string name;
         byte prg_rom_chunks;
@@ -40,6 +44,9 @@ namespace NES
         // Constructor - open the file and read it - we're assumiung iNes format
         public Cartridge(string filename)
         {
+            //FileInfo fi = new FileInfo(filename);
+            saveFilename = Path.GetFileNameWithoutExtension(filename) + ".sav";
+            //Console.WriteLine($"{romFileName}");
             // open file in binary and read in the header
             using (BinaryReader binReader = new BinaryReader(File.Open(filename, FileMode.Open)))
             {
@@ -61,6 +68,12 @@ namespace NES
                 if ((byte)(mapper1 & 0b00000100) > 0)
                 {
                     unused += string.Join(null, binReader.ReadChars(512));
+                }
+
+                // Does this one have battery?
+                if ((mapper1 & 0x02) > 0)
+                {
+                    hasSaveBattery = true;
                 }
 
                 // Determine mapper and mirroring
@@ -141,6 +154,25 @@ namespace NES
                     default: break;
                 }
 
+                // load save if needed
+                if (hasSaveBattery)
+                {
+                    if (File.Exists(saveFilename))
+                    {
+                        using BinaryReader reader = new BinaryReader(File.OpenRead(saveFilename));
+                        {
+                            mapper.RAMStatic.Clear();
+
+                            mapper.RAMStatic.AddRange(reader.ReadBytes(32 * 1024).ToArray());
+                        }
+                    }
+
+                    //    using BinaryReader reader = new BinaryReader(File.OpenRead("savetest.sav"));
+                    //    {
+                    //        RAMStatic.AddRange(reader.ReadBytes(32 * 1024).ToArray());
+                    //    }
+                }
+
             }
 
         }
@@ -199,6 +231,16 @@ namespace NES
             {
                 if (mapped_addr == 0xFFFFFFFF)
                 {
+                    // save if battery backup
+                    if (hasSaveBattery)
+                    {
+                        // TODO: Write to file here
+                        //string filename = 
+                        using BinaryWriter writer = new BinaryWriter(File.OpenWrite(saveFilename));
+                        {
+                            writer.Write(mapper.RAMStatic.ToArray());
+                        }
+                    }
                     return true;
                 }
                 else
